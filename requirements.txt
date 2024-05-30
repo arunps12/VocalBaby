@@ -1,2 +1,7 @@
 pydub
+numpy
 pandas
+torch
+torchaudio
+sklearn
+matplotlib
