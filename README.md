@@ -30,5 +30,6 @@ python extracting_voc_chunks_metadata.py <raw_audio_dir> <voc_chunks_dir> <metad
 ```
 # Vocalization Chunks Extraction and Mel-Spectrogram Image Generation
 To generate the mel spectrogram images for both train and test data, run below script from the command line with four string inputs specifying the directories for the vocalization audio dir, the metadata csv file path, and the output train and test images directory.
-```python extracting_voc_chunks_metadata.py <voc_dir> <metadata_df_file_path> <train_dir> <test_dir>
+```sh
+python train_test_imgs.py <voc_dir> <metadata_df_file_path> <train_dir> <test_dir>
 ```
