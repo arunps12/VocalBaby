@@ -29,7 +29,13 @@ To run the script, run it from the command line with three string inputs specify
 python extracting_voc_chunks_metadata.py <raw_audio_dir> <voc_chunks_dir> <metadata_dir>
 ```
 ## Vocalization Chunks Extraction and Mel-Spectrogram Image Generation
-To split vocalization data into train and test and generate the mel spectrogram images for both train and test data, run below script from the command line with four string inputs specifying the directories for the vocalization audio dir, the metadata csv file path, and the output train and test images directory.
+To split the vocalization data into train and test sets and generate mel spectrogram images for both, run the script from the command line with four inputs: the directory for the vocalization audio, the metadata CSV file path, and the directories to save the train and test images. The script also preprocesses the data by applying a preemphasis filter, converting the audio to mono, and downsampling it to 16000Hz. Also, the script ensures that all audio segments are exactly 1 second long: if an audio segment is less than 1 second, it repeats the segment until it reaches 1 second; if it is longer than 1 second, it splits the segment into multiple 1-second chunks.
+ 
 ```sh
 python train_test_imgs.py <voc_dir> <metadata_df_file_path> <train_dir> <test_dir>
 ```
+### Arguments
+<voc_dir>: Directory containing the vocalization audio clips and their corresponding timing text files.
+<metadata_df_file_path>: File path of the CSV file containing metadata.
+<train_dir>: Directory where the training mel-spectrogram images will be saved.
+<test_dir>: Directory where the testing mel-spectrogram images will be saved.
