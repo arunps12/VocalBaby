@@ -28,7 +28,7 @@ VocalBaby is a tool designed to classify audio segments as "Infant" or "Other" u
 
 ### **Clone the Repository**
 ```bash
-git clone https://github.com/yourusername/VocalBaby.git
+git clone https://github.com/arunps12/VocalBaby.git
 cd VocalBaby
 ```
 
