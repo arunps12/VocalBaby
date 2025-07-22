@@ -28,3 +28,5 @@ Thumbs.db
 *.pt
 *.safetensors
 
+# Ignore the junk folder completely
+junk/
