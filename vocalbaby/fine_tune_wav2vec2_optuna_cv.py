@@ -10,14 +10,18 @@ from optuna_pruning import OptunaPruningCallback
 import librosa
 import optuna.visualization as vis
 import torch
-from config import PROCESSED_METADATA_PATH, PROCESSED_DATA_DIR, MODELS_DIR
+from config import BALANCED_TRAIN_METADATA_PATH, PROCESSED_TRAIN_DATA_DIR, MODELS_DIR, LOCAL_WAV2VEC2_MODEL_PATH
 
 # Paths
-metadata_path = PROCESSED_METADATA_PATH
-audio_dir = PROCESSED_DATA_DIR
+metadata_path = BALANCED_TRAIN_METADATA_PATH
+audio_dir = PROCESSED_TRAIN_DATA_DIR
 model_name = "facebook/wav2vec2-large-xlsr-53"  # Pretrained Wav2Vec 2.0 model
+local_wav2ve2_dir = LOCAL_WAV2VEC2_MODEL_PATH
+os.makedirs(local_wav2ve2_dir, exist_ok=True)
 models_dir = MODELS_DIR
 os.makedirs(models_dir, exist_ok=True)
+
+
 
 # Device configuration: CPU or GPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -29,7 +33,7 @@ num_folds = 3  # Number of cross-validation folds
 # Load metadata
 metadata = pd.read_csv(metadata_path)
 metadata["audio_path"] = metadata["clip_ID"].apply(lambda x: os.path.join(audio_dir, x))
-metadata["int_classes"] = metadata["BinaryClass"].map({"A": 0, "B": 1})
+metadata["int_classes"] = metadata["classes"].map({"One": 0, "Two": 1, "Three": 2, "Four": 3, "Five": 4})
 metadata = metadata.dropna(subset=["int_classes"])  
 #metadata["int_classes"] = metadata["int_classes"].astype(int)
 metadata = metadata[["audio_path", "int_classes"]]  
@@ -54,7 +58,7 @@ def objective(trial):
     fold_metrics = []
 
     # Define hyperparameters to optimize
-    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)  # Updated to use suggest_float
+    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)  
     num_train_epochs = trial.suggest_int("num_train_epochs", 2, 5)
     per_device_train_batch_size = trial.suggest_categorical("per_device_train_batch_size", [4, 8, 16])
 
@@ -66,20 +70,24 @@ def objective(trial):
         val_dataset = dataset.select(val_index)
 
         # Load feature extractor and model
-        feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(model_name)
+        feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(local_wav2ve2_dir)
+        
+        num_labels = metadata["int_classes"].nunique()
         model = Wav2Vec2ForSequenceClassification.from_pretrained(
-            model_name,
-            num_labels=2,
-            problem_type="single_label_classification"
+            local_wav2ve2_dir,
+            num_labels= num_labels,
+            problem_type="single_label_classification",
+            ignore_mismatched_sizes=True
         ).to(device)  # Move the model to the selected device
 
         # Preprocessing function
         def preprocess_function(examples, feature_extractor):
             audio = examples["audio_path"]["array"]
             inputs = feature_extractor(audio, sampling_rate=16000, return_tensors="pt", padding=True)
+            
             return {
                     "input_values": inputs["input_values"].squeeze(),
-                    "labels": examples["int_classes"],  # Leave as is; we'll convert later
+                    "labels": examples["int_classes"],  
                     }
 
 
