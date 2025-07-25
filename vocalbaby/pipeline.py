@@ -3,7 +3,7 @@ from transformers import TrainingArguments, Trainer
 import numpy as np
 from datasets import Dataset
 from vocalbaby.model import load_model_for_inference, load_model_for_training
-from vocalbaby.utils import encode_labels_column, compute_class_weights, balance_dataset
+from vocalbaby.utils import encode_labels_column, compute_class_weights, balance_dataset, augment
 from vocalbaby.preprocess import load_and_preprocess_audio, apply_center_padding
 from vocalbaby.feature import extract_prosodic_features, prosody_to_sinusoid
 from vocalbaby.labels import ID2LABEL, LABEL2ID
@@ -29,10 +29,14 @@ def classify_audio(audio_path, model_repo, max_length=16000):
 
 def preprocess_example(example, processor, max_length=16000):
     waveform = load_and_preprocess_audio(example['path'])
-    padded = apply_center_padding(waveform, target_len=max_length)
-    inputs = processor(padded, sampling_rate=16000, return_tensors="pt", padding=True)
-    prosody = extract_prosodic_features(padded, sr=16000)
-    prosody_signal = prosody_to_sinusoid(prosody)
+    if example.get('augmented', False):
+        waveform = augment(samples=waveform, sample_rate=16000)
+    pitch, energy = extract_prosodic_features(waveform, sr=16000)
+    prosody_signal = prosody_to_sinusoid(pitch, energy)
+    #padded = apply_center_padding(prosody_signal, target_len=max_length)
+    inputs = processor(prosody_signal, sampling_rate=16000, return_tensors="pt", padding=False)
+    #prosody = extract_prosodic_features(padded, sr=16000)
+    #prosody_signal = prosody_to_sinusoid(prosody)
     return {
         'input_values': inputs['input_values'][0],
         'attention_mask': inputs.get('attention_mask', torch.ones_like(inputs['input_values'][0])),
@@ -41,7 +45,7 @@ def preprocess_example(example, processor, max_length=16000):
     }
 
 
-def train_model(train_df, eval_df, base_model_path, output_dir, use_class_weights=True, use_balancing=True, epochs=10, batch_size=8):
+def train_model(train_df, eval_df, base_model_path, output_dir, use_class_weights=False, use_balancing=True, epochs=10, batch_size=8):
     # Balance training data if specified
     if use_balancing:
         train_df = balance_dataset(train_df)
