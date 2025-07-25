@@ -3,10 +3,23 @@ import librosa
 
 def load_and_preprocess_audio(path, preemphasis=0.95, sample_rate=16000):
     waveform, sr = librosa.load(path, sr=None, mono=True)
+
     if sr != sample_rate:
         waveform = librosa.resample(waveform, orig_sr=sr, target_sr=sample_rate)
+
+    # Apply preemphasis
     waveform = np.append(waveform[0], waveform[1:] - preemphasis * waveform[:-1])
+
+    # Repeat waveform to ensure length of 1 second (16000 samples)
+    if len(waveform) < sample_rate:
+        num_repeats = int(np.ceil(sample_rate / len(waveform)))
+        waveform = np.tile(waveform, num_repeats)
+
+    # Truncate to exactly 1 second
+    waveform = waveform[:sample_rate]
+
     return waveform
+
 
 def compute_padding_length(waveforms):
     return max(len(wf) for wf in waveforms)
