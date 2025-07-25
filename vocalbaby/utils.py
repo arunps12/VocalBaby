@@ -11,7 +11,7 @@ from vocalbaby.labels import LABEL2ID, ID2LABEL
 augment = Compose([
     AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.01, p=0.5),
     PitchShift(min_semitones=-1, max_semitones=1, p=0.5),
-    TimeStretch(min_rate=0.9, max_rate=1.1, p=0.5)
+    #TimeStretch(min_rate=0.9, max_rate=1.1, p=0.5)
 ])
 
 import os
