@@ -19,7 +19,8 @@ setup(
         "matplotlib",
         "seaborn",
         "transformers",
-        "accelerate"
+        "accelerate",
+        "pytest"
     ],
     entry_points={
         "console_scripts": [
