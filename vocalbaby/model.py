@@ -53,7 +53,7 @@ class DualBranchProsodyModel(nn.Module):
 
         self._init_weights()
 
-    def forward(self, input_values=None, attention_mask=None, prosody_signal=None):
+    def forward(self, input_values=None, attention_mask=None, prosody_signal=None, labels=None):
         if self.mode == "audio_only":
             audio_embed = self.wav2vec2(input_values=input_values, attention_mask=attention_mask).last_hidden_state.mean(dim=1)
             fused = audio_embed
@@ -66,7 +66,20 @@ class DualBranchProsodyModel(nn.Module):
             prosody_embed = self._encode_prosody(prosody_signal)
             fused = torch.cat([audio_embed, prosody_embed], dim=-1)
 
-        return self.classifier(fused)
+        logits = self.classifier(fused)
+
+    # Compute loss if labels are provided
+        if labels is not None:
+            if hasattr(self, "class_weights"):
+                loss_fn = nn.CrossEntropyLoss(weight=self.class_weights.to(logits.device))
+            else:
+                loss_fn = nn.CrossEntropyLoss()
+            loss = loss_fn(logits, labels)
+            return {"logits": logits, "loss": loss}
+        else:
+            return {"logits": logits}
+
+
 
     def _encode_prosody(self, prosody_signal):
         if self.prosody_model == "cnn":
