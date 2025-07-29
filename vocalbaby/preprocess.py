@@ -25,9 +25,19 @@ def compute_padding_length(waveforms):
     return max(len(wf) for wf in waveforms)
 
 def apply_center_padding(waveform, target_len):
-    pad_total = target_len - len(waveform)
+    L = len(waveform)
+    pad_total = target_len - L
     if pad_total <= 0:
         return waveform[:target_len]
     pad_left = pad_total // 2
     pad_right = pad_total - pad_left
-    return np.pad(waveform, (pad_left, pad_right), mode='constant')
+    padded = np.pad(waveform, (pad_left, pad_right), mode='constant')
+
+    # Create attention mask
+    attention_mask = np.concatenate([
+        np.zeros(pad_left),
+        np.ones(L),
+        np.zeros(pad_right)
+    ])
+
+    return padded, attention_mask
