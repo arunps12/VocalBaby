@@ -53,8 +53,9 @@ def example_and_processor():
     print("Pitch:", pitch)    
     print("Energy:", energy)
     prosody_signal = prosody_to_sinusoid(pitch, energy)
-    prosody_signal = apply_center_padding(prosody_signal, 16000)
     sf.write("tests/prosody.wav", prosody_signal, samplerate=16000)
+    prosody_signal = apply_center_padding(prosody_signal, 16000)
+    sf.write("tests/prosody_padded.wav", prosody_signal, samplerate=16000)
 
     processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
     return example, processor
@@ -84,10 +85,13 @@ def test_label_valid(example_and_processor):
 def test_audio_loading_and_padding(example_and_processor):
     example, _ = example_and_processor
     waveform = load_and_preprocess_audio(example["path"])
-    waveform = apply_center_padding(waveform, 16000)
-    assert isinstance(waveform, np.ndarray)
-    assert waveform.ndim == 1
-    assert len(waveform) == 16000
+    print("\nWaveform shape:", waveform.shape)
+    print("Waveform stats:", waveform.min(), waveform.max(), waveform.mean())
+    print("Waveform:", waveform)
+    waveform_padded = apply_center_padding(waveform, 16000)
+    assert isinstance(waveform_padded, np.ndarray)
+    assert waveform_padded.ndim == 1
+    assert len(waveform_padded) == 16000
 
 def test_prosodic_feature_extraction(example_and_processor):
     example, _ = example_and_processor
@@ -101,7 +105,11 @@ def test_prosody_to_sinusoid(example_and_processor):
     waveform = load_and_preprocess_audio(example["path"])
     pitch, energy = extract_prosodic_features(waveform, sr=16000)
     signal = prosody_to_sinusoid(pitch, energy)
+    print("\nProsody signal shape:", signal.shape)
+    print("Prosody signal stats:", signal.min(), signal.max(), signal.mean())
+    print("Prosody signal:", signal)
     signal = apply_center_padding(signal, 16000)
+    
     assert isinstance(signal, np.ndarray)
     assert signal.shape == (16000,)
 
