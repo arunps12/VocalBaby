@@ -25,6 +25,7 @@ def main(args):
         lr_scheduler_type=args.lr_scheduler_type,
         warmup_ratio=args.warmup_ratio,
         compute_metrics=compute_metrics,
+        push_to_hub=args.push_to_hub,
         mode=args.mode, 
         prosody_model=args.prosody_model
     )
@@ -41,6 +42,7 @@ if __name__ == "__main__":
     parser.add_argument("--warmup_ratio", type=float, default=0.1)
     parser.add_argument("--class_weights", action="store_true")
     parser.add_argument("--balancing", action="store_true")
+    parser.add_argument("--push_to_hub", action="store_true", help="Whether to push the model to Hugging Face Hub")
     parser.add_argument("--mode", type=str, choices=["joint", "prosody", "audio"], default="joint")
     parser.add_argument("--prosody_model", type=str, choices=["cnn", "lstm"], default="cnn")
     args = parser.parse_args()
