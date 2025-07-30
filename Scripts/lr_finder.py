@@ -77,15 +77,20 @@ train_df = dataset["train"].to_pandas()
 train_df = balance_dataset(train_df).sample(n=1000)
 eval_df = dataset["validation"].to_pandas().sample(n=100)
 
+
 # Load model + processor
 base_model = "facebook/wav2vec2-base"
-model, processor = load_model_for_training(base_model)
+mode = "audio" # "prosody" #"joint"  "audio", 
+prosody_model = None
+model, processor = load_model_for_training(base_model, mode=mode, prosody_model=prosody_model)
 
 # Apply preprocessing
 train_dataset = Dataset.from_pandas(train_df)
 eval_dataset = Dataset.from_pandas(eval_df)
 train_dataset = train_dataset.map(lambda ex: preprocess_example(ex, processor))
 eval_dataset = eval_dataset.map(lambda ex: preprocess_example(ex, processor))
+train_dataset = train_dataset.remove_columns(["label"])
+eval_dataset = eval_dataset.remove_columns(["label"])
 
 lrs, losses = find_learning_rate(
     model=model,
