@@ -4,16 +4,23 @@ import torch
 import torch.nn as nn
 from transformers import Wav2Vec2Model
 
+
 class DualBranchProsodyModel(nn.Module):
-    def __init__(self, wav2vec2_path, fusion_dim=768, num_labels=5, mode="joint", prosody_model="cnn"):
+    def __init__(self, wav2vec2_path, fusion_dim=768, num_labels=5, mode="joint", prosody_model=None):
         super().__init__()
-        self.mode = mode  # 'joint', 'audio_only', 'prosody_only'
+        self.mode = mode  # 'joint', 'audio', 'prosody'
         self.prosody_model = prosody_model  # 'cnn' or 'lstm'
 
-        # Load pretrained Wav2Vec2
-        self.wav2vec2 = Wav2Vec2Model.from_pretrained(wav2vec2_path)
-        self.wav2vec2.feature_extractor._freeze_parameters()
+        # Only load Wav2Vec2 if needed
+        if self.mode in ["audio", "joint"]:
+            self.wav2vec2 = Wav2Vec2Model.from_pretrained(wav2vec2_path)
+            self.wav2vec2.feature_extractor._freeze_parameters()
+            wav2vec2_hidden_size = self.wav2vec2.config.hidden_size
+        else:
+            self.wav2vec2 = None
+            wav2vec2_hidden_size = 0
 
+        # Prosody branch
         if self.prosody_model == "cnn":
             self.prosody_net = nn.Sequential(
                 nn.Conv1d(1, 32, kernel_size=3, padding=1),
@@ -33,7 +40,7 @@ class DualBranchProsodyModel(nn.Module):
             self.prosody_fc = nn.Linear(128, fusion_dim)
 
         elif self.prosody_model == "lstm":
-            self.lstm = nn.LSTM(input_size=1, hidden_size=64, num_layers=1,
+            self.lstm = nn.LSTM(input_size=1, hidden_size=64, num_layers=2,
                                 batch_first=True, bidirectional=True, dropout=0.3)
             self.prosody_fc = nn.Sequential(
                 nn.Linear(64 * 2, 128),
@@ -42,7 +49,13 @@ class DualBranchProsodyModel(nn.Module):
                 nn.Linear(128, fusion_dim)
             )
 
-        input_dim = fusion_dim if self.mode in ["audio_only", "prosody_only"] else self.wav2vec2.config.hidden_size + fusion_dim
+        # Classifier input dim
+        if self.mode == "audio":
+            input_dim = wav2vec2_hidden_size
+        elif self.mode == "prosody":
+            input_dim = fusion_dim
+        else:  # joint
+            input_dim = wav2vec2_hidden_size + fusion_dim
 
         self.classifier = nn.Sequential(
             nn.Linear(input_dim, 256),
@@ -54,21 +67,24 @@ class DualBranchProsodyModel(nn.Module):
         self._init_weights()
 
     def forward(self, input_values=None, attention_mask=None, prosody_signal=None, labels=None):
-        if self.mode == "audio_only":
+        if self.mode == "audio":
+            if self.wav2vec2 is None:
+                raise RuntimeError("Wav2Vec2 model is not loaded in audio mode.")
             audio_embed = self.wav2vec2(input_values=input_values, attention_mask=attention_mask).last_hidden_state.mean(dim=1)
             fused = audio_embed
 
-        elif self.mode == "prosody_only":
+        elif self.mode == "prosody":
             fused = self._encode_prosody(prosody_signal)
 
         else:  # joint
+            if self.wav2vec2 is None:
+                raise RuntimeError("Wav2Vec2 model is required for joint mode but is not loaded.")
             audio_embed = self.wav2vec2(input_values=input_values, attention_mask=attention_mask).last_hidden_state.mean(dim=1)
             prosody_embed = self._encode_prosody(prosody_signal)
             fused = torch.cat([audio_embed, prosody_embed], dim=-1)
 
         logits = self.classifier(fused)
 
-    # Compute loss if labels are provided
         if labels is not None:
             if hasattr(self, "class_weights"):
                 loss_fn = nn.CrossEntropyLoss(weight=self.class_weights.to(logits.device))
@@ -78,8 +94,6 @@ class DualBranchProsodyModel(nn.Module):
             return {"logits": logits, "loss": loss}
         else:
             return {"logits": logits}
-
-
 
     def _encode_prosody(self, prosody_signal):
         if self.prosody_model == "cnn":
@@ -94,10 +108,19 @@ class DualBranchProsodyModel(nn.Module):
 
     def _init_weights(self):
         for m in self.modules():
+            # Applies to classifier head and CNN fully connected layers
             if isinstance(m, nn.Linear):
-                nn.init.xavier_uniform_(m.weight)
+                nn.init.kaiming_uniform_(m.weight, nonlinearity='relu')
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
+
+            # Applies to CNN convolutional layers
+            elif isinstance(m, nn.Conv1d):
+                nn.init.kaiming_uniform_(m.weight, nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+
+            # Applies to LSTM block
             elif isinstance(m, nn.LSTM):
                 for name, param in m.named_parameters():
                     if 'weight' in name:
@@ -107,7 +130,7 @@ class DualBranchProsodyModel(nn.Module):
 
 
 
-def load_model_for_inference(repo_id_or_path, mode="joint", prosody_model="cnn"):
+def load_model_for_inference(repo_id_or_path, mode="joint", prosody_model=None):
     from transformers import Wav2Vec2Processor
     processor = Wav2Vec2Processor.from_pretrained(repo_id_or_path)
     model = DualBranchProsodyModel(repo_id_or_path, mode=mode, prosody_model=prosody_model)
@@ -115,7 +138,7 @@ def load_model_for_inference(repo_id_or_path, mode="joint", prosody_model="cnn")
     return model, processor
 
 
-def load_model_for_training(base_model_path, num_labels=5, mode="joint", prosody_model="cnn"):
+def load_model_for_training(base_model_path, num_labels=5, mode="joint", prosody_model=None):
     from transformers import Wav2Vec2Processor
     processor = Wav2Vec2Processor.from_pretrained(base_model_path)
     model = DualBranchProsodyModel(base_model_path, num_labels=num_labels, mode=mode, prosody_model=prosody_model)
