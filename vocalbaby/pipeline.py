@@ -24,13 +24,38 @@ def compute_metrics(pred):
 
 
 def classify_audio(audio_path, model_repo, max_length=16000):
-    model, processor = load_model_for_training(model_repo)
-    waveform = load_and_preprocess_audio(audio_path)
-    waveform = apply_center_padding(waveform, max_length)
 
-    inputs = processor(waveform, sampling_rate=16000, return_tensors="pt", padding=True)
+    # Load mode and prosody model type from saved config
+    with open(os.path.join(model_repo, "config.json")) as f:
+        config = json.load(f)
+    mode = config.get("mode", "joint")
+    prosody_model = config.get("prosody_model", None)
+
+    # Load model for inference
+    from vocalbaby.model import load_model_for_inference
+    model, processor = load_model_for_inference(model_repo, mode=mode, prosody_model=prosody_model)
+
+    # Load and pad audio
+    waveform = load_and_preprocess_audio(audio_path)
+    waveform_padded, attn_mask = apply_center_padding(waveform, max_length)
+    inputs = processor(waveform_padded, sampling_rate=16000, return_tensors="pt", padding=False)
+
+    # Build input dictionary
+    input_dict = {
+        "input_values": inputs["input_values"],
+        "attention_mask": torch.tensor(attn_mask, dtype=torch.long).unsqueeze(0)
+    }
+
+    if mode in ["prosody", "joint"]:
+        pitch, energy = extract_prosodic_features(waveform, sr=16000)
+        prosody_signal = prosody_to_sinusoid(pitch, energy)
+        prosody_signal, _ = apply_center_padding(prosody_signal, max_length)
+        input_dict["prosody_signal"] = torch.tensor(prosody_signal, dtype=torch.float32).unsqueeze(0)
+
+    # Predict
     with torch.no_grad():
-        logits = model(**inputs).logits
+        output = model(**input_dict)
+        logits = output["logits"]
         probs = torch.nn.functional.softmax(logits, dim=-1)
         pred_id = torch.argmax(probs, dim=-1).item()
 
@@ -69,8 +94,8 @@ def train_model(train_df, eval_df, base_model_path, output_dir,
                 use_class_weights=True, use_balancing=True,
                 learning_rate=1e-5, epochs=10, batch_size=8,lr_scheduler_type="linear",
                 warmup_ratio=0.1,
-                compute_metrics=None,
-                mode="joint", prosody_model="cnn"):
+                compute_metrics=None, push_to_hub=False,
+                mode="joint", prosody_model=None):
 
     from transformers import TrainerCallback
 
@@ -111,6 +136,7 @@ def train_model(train_df, eval_df, base_model_path, output_dir,
             logging_strategy="epoch",
             logging_steps=10,
             hub_model_id=output_path.split("/")[-1],
+            push_to_hub=False,
             fp16=torch.cuda.is_available(),
             report_to="none"
         )
@@ -136,33 +162,29 @@ def train_model(train_df, eval_df, base_model_path, output_dir,
             param.requires_grad = True
         trainer_stage2 = make_trainer(model, output_dir, num_epochs=epochs, learning_rate=learning_rate)
         trainer_stage2.train()
-        trainer_stage2.save_model(output_dir)
+        trainer = trainer_stage2
     else:
         trainer = make_trainer(model, output_dir, num_epochs=epochs, learning_rate=learning_rate)
         trainer.train()
-        trainer.save_model(output_dir) 
+    print(f"Training completed. Model saved to {output_dir}")
+    trainer.save_model(output_dir)
+    processor.save_pretrained(output_dir)
 
-    # Saving logic
-    #if mode == "audio":
-        #model.save_pretrained(output_dir)
-        #if push_to_hub:
-            #trainer.push_to_hub()
-    #else:
-    #trainer.save_model(output_dir)         # saves best model (after load_best_model_at_end=True)
-    processor.save_pretrained(output_dir) # save tokenizer / processor config
-    #torch.save(model.state_dict(), os.path.join(output_dir, "pytorch_model.bin"))
-
-    #processor.save_pretrained(output_dir)
+    if push_to_hub:
+        trainer.push_to_hub()
 
     # Save model config for custom loading
     config_dict = {
-        "model_type": "DualBranchProsodyModel",
-        "base_model": base_model_path,
-        "mode": mode,
-        "prosody_model": prosody_model,
-        "num_labels": len(LABEL2ID),
-        "fusion_dim": 768
-    }
+    "model_type": "DualBranchProsodyModel",
+    "base_model": base_model_path,
+    "mode": mode,
+    "num_labels": len(LABEL2ID)
+}
+
+    # Only add prosody-related settings if needed
+    if mode in ["prosody", "joint"]:
+        config_dict["prosody_model"] = prosody_model
+        config_dict["fusion_dim"] = 768 
     with open(os.path.join(output_dir, "config.json"), "w") as f:
         json.dump(config_dict, f, indent=4)
 
