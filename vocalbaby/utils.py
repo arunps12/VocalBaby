@@ -2,11 +2,76 @@ import os
 import pandas as pd
 import numpy as np
 import torch
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from datasets import DatasetDict, Dataset
-from collections import Counter
+from collections import Counter, defaultdict
 from audiomentations import Compose, AddGaussianNoise, TimeStretch, PitchShift, Gain, AddBackgroundNoise
 from vocalbaby.labels import LABEL2ID, ID2LABEL
+
+
+# plot_initial_weights
+def plot_initial_weights(model, out_dir="initial_weights", exclude_keywords=["wav2vec2"]):
+    os.makedirs(out_dir, exist_ok=True)
+
+    for name, param in model.named_parameters():
+        if 'weight' in name and param.requires_grad:
+            if any(skip in name for skip in exclude_keywords):
+                continue  # skip Wav2Vec2 weights or others
+
+            weights = param.detach().cpu().flatten().numpy()
+            plt.figure(figsize=(6, 4))
+            plt.hist(weights, bins=100, color="skyblue", edgecolor="black")
+            plt.title(f"Init weights: {name}")
+            plt.xlabel("Weight value")
+            plt.ylabel("Frequency")
+            plt.tight_layout()
+            safe_name = name.replace(".", "_")
+            plt.savefig(os.path.join(out_dir, f"{safe_name}.png"))
+            plt.close()
+
+#save_activation & plot_all_activations
+ACTIVATIONS = defaultdict(list)
+
+def save_activation(name):
+    def hook(module, input, output):
+        if isinstance(output, torch.Tensor):
+            pooled = output.mean(dim=1).detach().cpu().flatten()
+            ACTIVATIONS[name].append(pooled)
+    return hook
+
+def plot_all_activations(activations, out_dir="activation_plots", tag="epoch"):
+    os.makedirs(out_dir, exist_ok=True)
+    for name, act_list in activations.items():
+        if not act_list:
+            continue
+        all_acts = torch.cat(act_list).numpy()
+        plt.figure(figsize=(6, 4))
+        plt.hist(all_acts, bins=50, color='skyblue', edgecolor='black')
+        plt.title(f"{name} activations ({tag})")
+        plt.xlabel("Activation value")
+        plt.ylabel("Frequency")
+        plt.tight_layout()
+        plt.savefig(os.path.join(out_dir, f"{name}_{tag}.png"))
+        plt.close()
+    activations.clear()
+
+def register_activation_hooks(model, mode, prosody_model):
+    hooks = []
+
+    if mode in ["audio", "joint"] and model.wav2vec2 is not None:
+        hooks.append(model.wav2vec2.encoder.layers[0].register_forward_hook(save_activation("wav2vec2_layer0")))
+        hooks.append(model.wav2vec2.encoder.layers[-1].register_forward_hook(save_activation("wav2vec2_layer11")))
+
+    if mode in ["prosody", "joint"]:
+        if prosody_model == "cnn":
+            hooks.append(model.prosody_net[0].register_forward_hook(save_activation("prosody_conv1")))
+            hooks.append(model.prosody_net[3].register_forward_hook(save_activation("prosody_conv2")))
+            hooks.append(model.prosody_net[6].register_forward_hook(save_activation("prosody_conv3")))
+        elif prosody_model == "lstm":
+            hooks.append(model.lstm.register_forward_hook(save_activation("prosody_lstm_output")))
+
+    return hooks
 
 # Augmentation strategies per class
 CLASS_AUGMENTATIONS = {
