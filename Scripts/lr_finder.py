@@ -80,8 +80,8 @@ eval_df = dataset["validation"].to_pandas().sample(n=100)
 
 # Load model + processor
 base_model = "facebook/wav2vec2-base"
-mode = "audio" # "prosody" #"joint"  "audio", 
-prosody_model = None
+mode = "joint" # "prosody" #"joint"  "audio", 
+prosody_model = "lstm"
 model, processor = load_model_for_training(base_model, mode=mode, prosody_model=prosody_model)
 
 # Apply preprocessing
@@ -103,7 +103,7 @@ lrs, losses = find_learning_rate(
     batch_size=2
 )
 
-plot_learning_rate_curve(lrs, losses)
+
 
 # Convert to numpy
 lrs = np.array(lrs)
@@ -130,3 +130,5 @@ else:
 print(f"\n LR w/ Min Loss:         {lr_min_loss:.2e}")
 print(f" LR w/ Steepest Slope:   {lr_steepest:.2e}")
 print(f"  LR Before Divergence:  {lr_pre_diverge:.2e}")
+
+plot_learning_rate_curve(lrs, losses)
