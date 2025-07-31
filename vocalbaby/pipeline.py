@@ -2,11 +2,11 @@ import os
 import torch
 import numpy as np
 import json
-from transformers import TrainingArguments, Trainer
+from transformers import TrainingArguments, Trainer, TrainerCallback
 from datasets import Dataset
 from sklearn.metrics import accuracy_score, recall_score
 from vocalbaby.model import load_model_for_training
-from vocalbaby.utils import encode_labels_column, compute_class_weights, balance_dataset
+from vocalbaby.utils import encode_labels_column, compute_class_weights, balance_dataset, ACTIVATIONS, plot_all_activations, register_activation_hooks
 from vocalbaby.preprocess import load_and_preprocess_audio, apply_center_padding
 from vocalbaby.feature import extract_prosodic_features, prosody_to_sinusoid
 from vocalbaby.labels import ID2LABEL, LABEL2ID
@@ -89,6 +89,19 @@ def preprocess_example(example, processor, max_length=16000):
         'prosody_signal': prosody_signal
     }
 
+class ActivationLoggerCallback(TrainerCallback):
+    def on_epoch_end(self, args, state, control, **kwargs):
+        model = kwargs['model']
+        eval_loader = kwargs['eval_dataloader']
+        if not eval_loader:
+            return
+
+        batch = next(iter(eval_loader))
+        model.eval()
+        with torch.no_grad():
+            inputs = {k: v.to(model) for k, v in batch.items() if k != 'labels'}
+            model(**inputs)
+        plot_all_activations(ACTIVATIONS, out_dir=os.path.join(args.output_dir, "activations"), tag=f"epoch{state.epoch:.0f}")
 
 def train_model(train_df, eval_df, base_model_path, output_dir,
                 use_class_weights=True, use_balancing=True,
@@ -104,6 +117,12 @@ def train_model(train_df, eval_df, base_model_path, output_dir,
 
     model, processor = load_model_for_training(base_model_path, mode=mode, prosody_model=prosody_model)
 
+    # Register activation hooks
+    hooks = register_activation_hooks(model, mode=mode, prosody_model=prosody_model)
+
+    # Attach activation logging callback
+    activation_cb = ActivationLoggerCallback()
+
     train_dataset = Dataset.from_pandas(train_df)
     eval_dataset = Dataset.from_pandas(eval_df)
 
@@ -113,7 +132,7 @@ def train_model(train_df, eval_df, base_model_path, output_dir,
     eval_dataset = eval_dataset.remove_columns(["label"])
 
     if use_class_weights:
-        labels = train_dataset['label']
+        labels = train_dataset['labels']
         class_weights = compute_class_weights(labels, num_classes=len(LABEL2ID))
         model.class_weights = class_weights
 
@@ -146,7 +165,8 @@ def train_model(train_df, eval_df, base_model_path, output_dir,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             tokenizer=processor,
-            compute_metrics=compute_metrics
+            compute_metrics=compute_metrics,
+            callbacks=[activation_cb]
         )
 
     if mode == "joint":
@@ -169,6 +189,9 @@ def train_model(train_df, eval_df, base_model_path, output_dir,
     print(f"Training completed. Model saved to {output_dir}")
     trainer.save_model(output_dir)
     processor.save_pretrained(output_dir)
+    for h in hooks:
+        h.remove()
+
 
     if push_to_hub:
         trainer.push_to_hub()
