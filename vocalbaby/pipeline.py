@@ -6,7 +6,7 @@ from transformers import TrainingArguments, Trainer, TrainerCallback
 from datasets import Dataset
 from sklearn.metrics import accuracy_score, recall_score
 from vocalbaby.model import load_model_for_training
-from vocalbaby.utils import encode_labels_column, compute_class_weights, balance_dataset, ACTIVATIONS, plot_all_activations, register_activation_hooks
+from vocalbaby.utils import encode_labels_column, compute_class_weights, balance_dataset ,plot_initial_weights, ACTIVATIONS, plot_all_activations, register_activation_hooks
 from vocalbaby.preprocess import load_and_preprocess_audio, apply_center_padding
 from vocalbaby.feature import extract_prosodic_features, prosody_to_sinusoid
 from vocalbaby.labels import ID2LABEL, LABEL2ID
@@ -90,6 +90,10 @@ def preprocess_example(example, processor, max_length=16000):
     }
 
 class ActivationLoggerCallback(TrainerCallback):
+    def on_train_begin(self, args, state, control, **kwargs):
+        model = kwargs['model']
+        plot_initial_weights(model, out_dir=os.path.join(args.output_dir, "initial_weights"))
+
     def on_epoch_end(self, args, state, control, **kwargs):
         model = kwargs['model']
         eval_loader = kwargs['eval_dataloader']
@@ -98,8 +102,9 @@ class ActivationLoggerCallback(TrainerCallback):
 
         batch = next(iter(eval_loader))
         model.eval()
+        device = next(model.parameters()).device
         with torch.no_grad():
-            inputs = {k: v.to(model) for k, v in batch.items() if k != 'labels'}
+            inputs = {k: v.to(device) for k, v in batch.items() if k != 'labels'}
             model(**inputs)
         plot_all_activations(ACTIVATIONS, out_dir=os.path.join(args.output_dir, "activations"), tag=f"epoch{state.epoch:.0f}")
 
