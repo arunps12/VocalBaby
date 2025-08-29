@@ -11,7 +11,6 @@ setup(
     install_requires=[
         "pandas",
         "numpy",
-        "torch",
         "librosa",
         "audiomentations",
         "datasets",

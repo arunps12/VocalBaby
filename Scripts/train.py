@@ -44,6 +44,6 @@ if __name__ == "__main__":
     parser.add_argument("--balancing", action="store_true")
     parser.add_argument("--push_to_hub", action="store_true", help="Whether to push the model to Hugging Face Hub")
     parser.add_argument("--mode", type=str, choices=["joint", "prosody", "audio"], default="joint")
-    parser.add_argument("--prosody_model", type=str, choices=["cnn", "lstm"], default="cnn")
+    parser.add_argument("--prosody_model", type=str, choices=["cnn", "lstm"], default=None,help="Prosody model to use. If not provided, default None.")
     args = parser.parse_args()
     main(args)

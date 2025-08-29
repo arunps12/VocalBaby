@@ -13,7 +13,7 @@ class DualBranchProsodyModel(nn.Module):
 
         # Only load Wav2Vec2 if needed
         if self.mode in ["audio", "joint"]:
-            self.wav2vec2 = Wav2Vec2Model.from_pretrained(wav2vec2_path)
+            self.wav2vec2 = Wav2Vec2Model.from_pretrained(wav2vec2_path, use_safetensors=True)
             self.wav2vec2.feature_extractor._freeze_parameters()
             wav2vec2_hidden_size = self.wav2vec2.config.hidden_size
         else:

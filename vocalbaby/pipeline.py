@@ -142,14 +142,34 @@ def train_model(train_df, eval_df, base_model_path, output_dir,
         model.class_weights = class_weights
 
     def make_trainer(model_to_use, output_path, num_epochs, learning_rate):
+
+        os.environ.setdefault("NCCL_P2P_DISABLE", "1")
+        os.environ.setdefault("NCCL_IB_DISABLE", "1")
+        os.environ.setdefault("TORCH_NCCL_BLOCKING_WAIT", "1")
+        os.environ.setdefault("CUDA_DEVICE_ORDER", "PCI_BUS_ID")
+
+        world_size = int(os.environ.get("WORLD_SIZE", "1"))          
+        is_test = bool(os.environ.get("PYTEST_CURRENT_TEST")) or bool(os.environ.get("VB_TEST_MODE"))
+        use_fp16 = torch.cuda.is_available() and not is_test         
+
+    
+        per_device = batch_size                                     
+        target_global = int(os.environ.get("VB_TARGET_GLOBAL", "32"))
+        denom = max(1, world_size * per_device)
+        grad_accum = max(1, (target_global + denom - 1) // denom)
+
+        print(f"[AutoDDP] world_size={world_size} per_device={per_device} "
+          f"grad_accum={grad_accum} -> global_batch={world_size*per_device*grad_accum}")
+        
         args = TrainingArguments(
             output_dir=output_path,
-            per_device_train_batch_size=batch_size,
-            per_device_eval_batch_size=batch_size,
+            per_device_train_batch_size=per_device,     # per GPU
+            per_device_eval_batch_size=per_device,      # per GPU
             num_train_epochs=num_epochs,
             learning_rate=learning_rate,
             lr_scheduler_type=lr_scheduler_type,
             warmup_ratio=warmup_ratio,
+
             eval_strategy="epoch",
             save_strategy="epoch",
             save_total_limit=2,
@@ -159,11 +179,35 @@ def train_model(train_df, eval_df, base_model_path, output_dir,
             logging_dir=os.path.join(output_path, "logs"),
             logging_strategy="epoch",
             logging_steps=10,
+            report_to="none",
+
+        
+            #remove_unused_columns=False,
+
+        
+            gradient_accumulation_steps=grad_accum,
+            dataloader_num_workers=4 if not is_test else 0,
+            dataloader_pin_memory=True,
+
+        
+            ddp_find_unused_parameters=(mode in ["joint"]),
+
+        
+            ddp_timeout=18000,
+
+        
+            fp16=use_fp16,
+
+        
+            gradient_checkpointing=not is_test,
+
+        
             hub_model_id=output_path.split("/")[-1],
             push_to_hub=False,
-            fp16=torch.cuda.is_available(),
-            report_to="none"
+            group_by_length=False,
+            eval_accumulation_steps=8,   
         )
+
         return Trainer(
             model=model_to_use,
             args=args,
@@ -179,12 +223,16 @@ def train_model(train_df, eval_df, base_model_path, output_dir,
         model.wav2vec2.eval()
         for param in model.wav2vec2.parameters():
             param.requires_grad = False
+        if hasattr(model.wav2vec2, "gradient_checkpointing_disable"):
+            model.wav2vec2.gradient_checkpointing_disable()
         trainer_stage1 = make_trainer(model, output_dir + "_stage1", num_epochs=epochs*5, learning_rate= learning_rate * 10)
         trainer_stage1.train()
 
         print("[Stage 2] Fine-tuning Full Model")
         for param in model.wav2vec2.parameters():
             param.requires_grad = True
+        if hasattr(model.wav2vec2, "gradient_checkpointing_enable"):
+            model.wav2vec2.gradient_checkpointing_enable()
         trainer_stage2 = make_trainer(model, output_dir, num_epochs=epochs, learning_rate=learning_rate)
         trainer_stage2.train()
         trainer = trainer_stage2

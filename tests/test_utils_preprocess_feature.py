@@ -42,7 +42,7 @@ def example_and_processor():
     waveform = load_and_preprocess_audio(example["path"])
     sf.write("tests/raw.wav", waveform, samplerate=16000)
 
-    waveform_padded = apply_center_padding(waveform, 16000)
+    waveform_padded, _ = apply_center_padding(waveform, 16000)
     sf.write("tests/waveform_padded.wav", waveform_padded, samplerate=16000)
 
     pitch, energy = extract_prosodic_features(waveform, sr=16000)
@@ -54,8 +54,8 @@ def example_and_processor():
     print("Energy:", energy)
     prosody_signal = prosody_to_sinusoid(pitch, energy)
     sf.write("tests/prosody.wav", prosody_signal, samplerate=16000)
-    prosody_signal = apply_center_padding(prosody_signal, 16000)
-    sf.write("tests/prosody_padded.wav", prosody_signal, samplerate=16000)
+    prosody_signal_padded, _ = apply_center_padding(prosody_signal, 16000)
+    sf.write("tests/prosody_padded.wav", prosody_signal_padded, samplerate=16000)
 
     processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
     return example, processor
@@ -88,7 +88,7 @@ def test_audio_loading_and_padding(example_and_processor):
     print("\nWaveform shape:", waveform.shape)
     print("Waveform stats:", waveform.min(), waveform.max(), waveform.mean())
     print("Waveform:", waveform)
-    waveform_padded = apply_center_padding(waveform, 16000)
+    waveform_padded, _ = apply_center_padding(waveform, 16000)
     assert isinstance(waveform_padded, np.ndarray)
     assert waveform_padded.ndim == 1
     assert len(waveform_padded) == 16000
@@ -108,7 +108,7 @@ def test_prosody_to_sinusoid(example_and_processor):
     print("\nProsody signal shape:", signal.shape)
     print("Prosody signal stats:", signal.min(), signal.max(), signal.mean())
     print("Prosody signal:", signal)
-    signal = apply_center_padding(signal, 16000)
+    signal, _ = apply_center_padding(signal, 16000)
     
     assert isinstance(signal, np.ndarray)
     assert signal.shape == (16000,)
@@ -136,22 +136,23 @@ def test_preprocess_example_output(example_and_processor):
     assert "attention_mask" in out
     assert out["attention_mask"].shape[0] == 16000
 
-    assert "features" in out
-    assert isinstance(out["features"], np.ndarray)
-    assert out["features"].shape == (16000,)
+    assert "prosody_signal" in out
+    assert isinstance(out["prosody_signal"], np.ndarray)
+    assert out["prosody_signal"].shape == (16000,)
+    assert out["prosody_signal"].dtype == np.float32
 
-    assert "label" in out
-    assert isinstance(out["label"], int)
+    assert "labels" in out
+    assert isinstance(out["labels"], int)
 
 def test_processor_output(example_and_processor):
     example, processor = example_and_processor
     waveform = load_and_preprocess_audio(example["path"])
-    waveform_padded = apply_center_padding(waveform, 16000)
+    waveform_padded,_ = apply_center_padding(waveform, 16000)
     inputs = processor(waveform_padded, sampling_rate=16000, return_tensors="pt", padding=True)
 
     pitch, energy = extract_prosodic_features(waveform, sr=16000)
     prosody_signal = prosody_to_sinusoid(pitch, energy)
-    prosody_signal = apply_center_padding(prosody_signal, 16000)
+    prosody_signal, _ = apply_center_padding(prosody_signal, 16000)
 
     assert "input_values" in inputs
     assert inputs["input_values"].shape[1] == 16000
