@@ -16,7 +16,7 @@ You can test the pretrained ConvNeXt model (trained on the **BabbleCor** corpus)
 
 🔗 **Live Demo:** [https://huggingface.co/spaces/arunps/Adult_Infant_voc_test](https://huggingface.co/spaces/arunps/Adult_Infant_voc_test)
 
-Upload a Mel-spectrogram image and get the predicted vocalization class instantly.
+Upload a audio segment and get the predicted vocalization class instantly.
 
 ---
 
@@ -83,7 +83,7 @@ VisionInfantNet/
 
 ## 🎧 Step 1 — Extract Infant Vocalization Segments
 
-When you have **continuous recordings** but know the **start and stop times** of each infant vocalization (e.g., from annotation text files),  
+When you have **continuous recordings** but know the **start and stop times** of each infant and adult segments (e.g., from annotation text files),  
 use the script `01_create_data_and_metadata.py` to segment the audio and create the metadata CSV.
 
 ### Command
@@ -190,8 +190,8 @@ Generates validation metrics including accuracy, F1, precision, recall, and a co
 
 ## 📊 Results & Reuse
 
-The pretrained **ConvNeXt** model trained on **BabbleCor** accurately classifies infant vocalizations into five categories.  
-While **BabbleCor** cannot be shared publicly, the provided pipeline allows **retraining on your own data** using identical steps — no code modifications required.
+The pretrained **ConvNeXt** model trained on **BabbleCor** classifies infant vocalizations into five categories.  
+While **BabbleCor** cannot be shared publicly, the provided pipeline allows **retraining on your own data** .
 
 ---
 
