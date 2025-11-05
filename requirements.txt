@@ -1,7 +1,22 @@
-pydub
+# === Core ML Stack ===
+torch==2.4.1
+torchvision==0.19.1
+torchaudio==2.4.1
+
+# === FastAI (pre-2.8 for pickle model support) ===
+fastai==2.7.17
+fastcore==1.5.29
+fastdownload==0.0.7
+fastprogress==1.0.3
+
+# === Image + Audio Processing ===
+timm
 numpy
 pandas
-torch
-torchaudio
-sklearn
 matplotlib
+librosa
+Pillow
+
+# === Development & Visualization ===
+jupyter
+scikit-learn

@@ -1,0 +1,63 @@
+# =====================================
+# Python & Environment
+# =====================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.pth
+*.log
+*.egg-info/
+*.egg
+.env
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+.DS_Store
+
+# =====================================
+# Data & Audio
+# =====================================
+*.wav
+*.mp3
+*.flac
+*.m4a
+
+InfantVocAudio/
+RawData/
+
+
+# =====================================
+# Jupyter Notebook Temporary Files
+# =====================================
+*.ipynb_checkpoints
+notebooks/.ipynb_checkpoints/
+
+# =====================================
+# Archives & Temporary Artifacts
+# =====================================
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.rar
+*.bak
+*.tmp
+
+# =====================================
+# System & Editor Files
+# =====================================
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# =====================================
+# Cache folders
+# =====================================
+~/.cache/
+~/.torch/
+~/.fastai/
+~/.huggingface/
