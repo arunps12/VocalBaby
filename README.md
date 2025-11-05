@@ -239,7 +239,7 @@ If you use or adapt this repository, please cite:
 **Author:** Arun Singh  
 **Affiliation:** University of Oslo, Norway  
 **Email:** [arunps@uio.no](mailto:arunps@uio.no)  
-**Hugging Face Space:** [https://huggingface.co/spaces/arunps12/VisionInfantNet](https://huggingface.co/spaces/arunps12/VisionInfantNet)
+**Hugging Face Space:** [https://huggingface.co/spaces/arunps/Adult_Infant_voc_test](https://huggingface.co/spaces/arunps/Adult_Infant_voc_test)
 
 ---
 
