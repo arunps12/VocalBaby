@@ -6,7 +6,7 @@ The model fine-tunes a **ConvNeXt** image architecture (from the TIMM library) u
 > **Classes:** `Junk`, `Non-canonical`, `Canonical`, `Cry`, and `Laugh`
 
 The repository also includes data preparation scripts that show how to extract infant vocalization clips from long audio recordings and convert them into Mel-spectrogram images for model training.  
-Although the **BabbleCor** corpus used for original training is not publicly shared, this repository allows anyone to use the same training pipeline on any open-source or private dataset **without errors**.
+Although the **BabbleCor** corpus [BabbleCor Dataset on OSF](https://osf.io/b2j9r/) used for original training is not publicly shared, this repository allows anyone to use the same training pipeline on any open-source or private dataset **without errors**.
 
 ---
 
@@ -191,7 +191,7 @@ Generates validation metrics including accuracy, F1, precision, recall, and a co
 ## 📊 Results & Reuse
 
 The pretrained **ConvNeXt** model trained on **BabbleCor** classifies infant vocalizations into five categories.  
-While **BabbleCor** cannot be shared publicly, the provided pipeline allows **retraining on your own data** .
+While **BabbleCor** [BabbleCor Dataset on OSF](https://osf.io/b2j9r/) cannot be shared publicly, the provided pipeline allows **retraining on your own data** .
 
 ---
 
