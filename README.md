@@ -14,7 +14,7 @@ Although the **BabbleCor** corpus used for original training is not publicly sha
 
 You can test the pretrained ConvNeXt model (trained on the **BabbleCor** corpus) directly on Hugging Face Spaces:
 
-🔗 **Live Demo:** [https://huggingface.co/spaces/arunps12/VisionInfantNet](https://huggingface.co/spaces/arunps12/VisionInfantNet)
+🔗 **Live Demo:** [https://huggingface.co/spaces/arunps/Adult_Infant_voc_test](https://huggingface.co/spaces/arunps/Adult_Infant_voc_test)
 
 Upload a Mel-spectrogram image and get the predicted vocalization class instantly.
 
