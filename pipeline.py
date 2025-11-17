@@ -21,7 +21,7 @@ Notes:
 - Exports:
   * FastAI export (pickle): models/ConvNext.pkl
   * Safe weights:          models/best.pth (learn.save('best'))
-- FastAPI requires: fastapi, uvicorn (add to requirements if serving)
+- FastAPI requires: fastapi, uvicorn
 """
 
 import argparse
