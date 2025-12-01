@@ -1,3 +1,5 @@
+import os
+
 """
 defining common constant variable for training pipeline
 """
@@ -18,6 +20,8 @@ CORPUS_COLUMN: str = "corpus"
 
 # Column will generate during ingestion (full wav path)
 AUDIO_PATH_COLUMN: str = "path"
+
+SCHEMA_FILE_PATH = os.path.join("data_schema", "schema.yaml")
 
 """
 Data Ingestion related constant start with DATA_INGESTION VAR NAME
@@ -74,3 +78,15 @@ SPLIT_COUNTS = {
 }
 
 
+"""
+Data Validation related constants start with DATA_VALIDATION_ VAR NAME
+"""
+
+DATA_VALIDATION_DIR_NAME: str = "data_validation"
+DATA_VALIDATION_VALID_DIR: str = "validated"
+DATA_VALIDATION_INVALID_DIR: str = "invalid"
+
+DATA_VALIDATION_REPORT_FILE: str = "validation_report.yaml"
+
+DATA_VALIDATION_DRIFT_REPORT_DIR: str = "drift_report"
+DATA_VALIDATION_DRIFT_REPORT_FILE_NAME: str = "drift_report.yaml"

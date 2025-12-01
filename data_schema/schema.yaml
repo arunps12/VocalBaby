@@ -1,0 +1,33 @@
+columns:
+  child_ID: object
+  clip_ID: object
+  path: object
+  Answer: object
+  age_mo_round: int64 
+  child_gender: object
+  corpus: object
+
+required_columns:
+  - child_ID
+  - clip_ID
+  - path
+  - Answer
+  - age_mo_round
+  - child_gender
+  - corpus
+
+categorical_columns:
+  - Answer
+  - child_gender
+  - corpus
+
+allowed_labels:
+  - Non-canonical
+  - Junk
+  - Canonical
+  - Crying
+  - Laughing
+
+audio_validation:
+  min_duration_seconds: 0.03
+  max_duration_seconds: 0.60

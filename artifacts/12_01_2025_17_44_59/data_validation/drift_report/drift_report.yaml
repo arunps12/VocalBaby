@@ -1,0 +1,61 @@
+age_distribution:
+  test:
+    baseline_mean_age: 17.995555555555555
+    current_mean_age: 18.026740947075208
+    difference: 0.03118539151965294
+  validation:
+    baseline_mean_age: 17.995555555555555
+    current_mean_age: 12.759217877094972
+    difference: -5.236337678460583
+class_distribution:
+  test:
+    Canonical:
+      baseline: 0.12333333333333334
+      current: 0.16016713091922005
+      difference: 0.036833797585886716
+    Crying:
+      baseline: 0.0675
+      current: 0.0532033426183844
+      difference: -0.014296657381615605
+    Junk:
+      baseline: 0.3972222222222222
+      current: 0.38774373259052924
+      difference: -0.009478489631692955
+    Laughing:
+      baseline: 0.012777777777777779
+      current: 0.017270194986072424
+      difference: 0.004492417208294646
+    Non-canonical:
+      baseline: 0.39916666666666667
+      current: 0.3816155988857939
+      difference: -0.017551067780872787
+  validation:
+    Canonical:
+      baseline: 0.12333333333333334
+      current: 0.10558659217877095
+      difference: -0.017746741154562387
+    Crying:
+      baseline: 0.0675
+      current: 0.04553072625698324
+      difference: -0.021969273743016764
+    Junk:
+      baseline: 0.3972222222222222
+      current: 0.37905027932960894
+      difference: -0.018171942892613258
+    Laughing:
+      baseline: 0.012777777777777779
+      current: 0.011452513966480447
+      difference: -0.0013252638112973315
+    Non-canonical:
+      baseline: 0.39916666666666667
+      current: 0.4583798882681564
+      difference: 0.05921322160148973
+duration_distribution:
+  test:
+    baseline_mean_duration: 0.35761967624086677
+    current_mean_duration: 0.3598287227449012
+    difference: 0.0022090465040344176
+  validation:
+    baseline_mean_duration: 0.35761967624086677
+    current_mean_duration: 0.35295499293758476
+    difference: -0.004664683303282013

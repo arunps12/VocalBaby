@@ -1,0 +1,43 @@
+[ 2025-12-01 17:22:19,987 ] 12 root - INFO - === VisionInfantNet: Data Ingestion Pipeline Started ===
+[ 2025-12-01 17:22:19,987 ] 23 root - INFO - Initiating data ingestion...
+[ 2025-12-01 17:22:19,988 ] 141 root - INFO - ===== Data Ingestion Started =====
+[ 2025-12-01 17:22:20,100 ] 41 root - INFO - Loaded metadata (13478 rows) and saved snapshot to: artifacts/12_01_2025_17_22_19/data_ingestion/full_metadata.csv
+[ 2025-12-01 17:22:20,100 ] 55 root - INFO - Starting child-disjoint splitting...
+[ 2025-12-01 17:22:20,112 ] 87 root - INFO - train split created with 3600 samples.
+[ 2025-12-01 17:22:20,120 ] 87 root - INFO - valid split created with 3580 samples.
+[ 2025-12-01 17:22:20,127 ] 87 root - INFO - test split created with 3590 samples.
+[ 2025-12-01 17:23:06,053 ] 112 root - INFO - Copied 3600 audio files to: artifacts/12_01_2025_17_22_19/data_ingestion/ingested_audio/train
+[ 2025-12-01 17:23:34,198 ] 112 root - INFO - Copied 3580 audio files to: artifacts/12_01_2025_17_22_19/data_ingestion/ingested_audio/valid
+[ 2025-12-01 17:23:58,638 ] 112 root - INFO - Copied 3590 audio files to: artifacts/12_01_2025_17_22_19/data_ingestion/ingested_audio/test
+[ 2025-12-01 17:23:58,688 ] 131 root - INFO - Saved metadata: artifacts/12_01_2025_17_22_19/data_ingestion/ingested_metadata/train.csv (3600 rows)
+[ 2025-12-01 17:23:58,737 ] 131 root - INFO - Saved metadata: artifacts/12_01_2025_17_22_19/data_ingestion/ingested_metadata/valid.csv (3580 rows)
+[ 2025-12-01 17:23:58,762 ] 131 root - INFO - Saved metadata: artifacts/12_01_2025_17_22_19/data_ingestion/ingested_metadata/test.csv (3590 rows)
+[ 2025-12-01 17:23:58,762 ] 159 root - INFO - ===== Data Ingestion Completed Successfully =====
+[ 2025-12-01 17:23:58,764 ] 25 root - INFO - Data ingestion completed successfully.
+[ 2025-12-01 17:23:58,765 ] 29 root - INFO - === VisionInfantNet: Data Ingestion Pipeline Finished ===
+[ 2025-12-01 17:23:58,766 ] 31 root - INFO - === VisionInfantNet: Data Validation Started ===
+[ 2025-12-01 17:23:58,766 ] 39 root - INFO - Initiating data validation...
+[ 2025-12-01 17:23:58,767 ] 267 root - INFO - ===== Data Validation Started =====
+[ 2025-12-01 17:23:58,770 ] 51 root - ERROR - Error occurred in VisionInfantNet pipeline.
+Traceback (most recent call last):
+  File "/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_validation.py", line 36, in _load_metadata_splits
+    train_df = pd.read_csv(self.ingestion_artifact.train_metadata_file)
+AttributeError: 'DataIngestionArtifact' object has no attribute 'train_metadata_file'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_validation.py", line 270, in initiate_data_validation
+    metadata_dict = self._load_metadata_splits()
+  File "/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_validation.py", line 41, in _load_metadata_splits
+    raise VisionInfantNetException(e, sys)
+visioninfantnet.exception.exception.VisionInfantNetException: Error occured in python script name [/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_validation.py] line number [36] error message ['DataIngestionArtifact' object has no attribute 'train_metadata_file']
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/itf-fi-ml/home/arunps/Projects/VisionInfantNet/main.py", line 40, in <module>
+    data_validation_artifact = data_validation.initiate_data_validation()
+  File "/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_validation.py", line 312, in initiate_data_validation
+    raise VisionInfantNetException(e, sys)
+visioninfantnet.exception.exception.VisionInfantNetException: Error occured in python script name [/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_validation.py] line number [270] error message [Error occured in python script name [/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_validation.py] line number [36] error message ['DataIngestionArtifact' object has no attribute 'train_metadata_file']]

@@ -1,0 +1,156 @@
+audio:
+  test:
+    duration_out_of_range: 0
+    duration_stats:
+      max: 0.5
+      mean: 0.3598287227449012
+      min: 0.074
+      std: 0.08279517265537001
+    missing_files: []
+    total_files: 3590
+  train:
+    duration_out_of_range: 0
+    duration_stats:
+      max: 0.5
+      mean: 0.35761967624086677
+      min: 0.052993197278911566
+      std: 0.08602303014816873
+    missing_files: []
+    total_files: 3600
+  validation:
+    duration_out_of_range: 0
+    duration_stats:
+      max: 0.5
+      mean: 0.35295499293758476
+      min: 0.036
+      std: 0.08783280886134516
+    missing_files: []
+    total_files: 3580
+child_disjoint:
+  train_test_overlap: []
+  train_valid_overlap: []
+  valid_test_overlap: []
+dtypes:
+  test:
+    Answer:
+      actual: object
+      expected: object
+      status: ok
+    age_mo_round:
+      actual: int64
+      expected: int64
+      status: ok
+    child_ID:
+      actual: object
+      expected: object
+      status: ok
+    child_gender:
+      actual: object
+      expected: object
+      status: ok
+    clip_ID:
+      actual: object
+      expected: object
+      status: ok
+    corpus:
+      actual: object
+      expected: object
+      status: ok
+    path:
+      actual: object
+      expected: object
+      status: ok
+  train:
+    Answer:
+      actual: object
+      expected: object
+      status: ok
+    age_mo_round:
+      actual: int64
+      expected: int64
+      status: ok
+    child_ID:
+      actual: object
+      expected: object
+      status: ok
+    child_gender:
+      actual: object
+      expected: object
+      status: ok
+    clip_ID:
+      actual: object
+      expected: object
+      status: ok
+    corpus:
+      actual: object
+      expected: object
+      status: ok
+    path:
+      actual: object
+      expected: object
+      status: ok
+  validation:
+    Answer:
+      actual: object
+      expected: object
+      status: ok
+    age_mo_round:
+      actual: int64
+      expected: int64
+      status: ok
+    child_ID:
+      actual: object
+      expected: object
+      status: ok
+    child_gender:
+      actual: object
+      expected: object
+      status: ok
+    clip_ID:
+      actual: object
+      expected: object
+      status: ok
+    corpus:
+      actual: object
+      expected: object
+      status: ok
+    path:
+      actual: object
+      expected: object
+      status: ok
+labels:
+  test:
+    invalid_labels: []
+    unique_labels:
+    - Canonical
+    - Crying
+    - Junk
+    - Laughing
+    - Non-canonical
+  train:
+    invalid_labels: []
+    unique_labels:
+    - Canonical
+    - Crying
+    - Junk
+    - Laughing
+    - Non-canonical
+  validation:
+    invalid_labels: []
+    unique_labels:
+    - Canonical
+    - Crying
+    - Junk
+    - Laughing
+    - Non-canonical
+overall_status: true
+schema:
+  test:
+    extra_columns: []
+    missing_columns: []
+  train:
+    extra_columns: []
+    missing_columns: []
+  validation:
+    extra_columns: []
+    missing_columns: []

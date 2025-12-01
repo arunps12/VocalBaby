@@ -6,5 +6,5 @@ matplotlib
 seaborn
 scikit-learn
 librosa
-
+pyaml
 ## -e .

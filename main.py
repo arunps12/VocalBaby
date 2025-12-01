@@ -1,7 +1,8 @@
 import sys
 
 from visioninfantnet.components.data_ingestion import DataIngestion
-from visioninfantnet.entity.config_entity import TrainingPipelineConfig, DataIngestionConfig
+from visioninfantnet.components.data_validation import DataValidation
+from visioninfantnet.entity.config_entity import TrainingPipelineConfig, DataIngestionConfig,DataValidationConfig
 from visioninfantnet.exception.exception import VisionInfantNetException
 from visioninfantnet.logging.logger import logging
 
@@ -27,6 +28,25 @@ if __name__ == "__main__":
 
         logging.info("=== VisionInfantNet: Data Ingestion Pipeline Finished ===")
 
+        logging.info("=== VisionInfantNet: Data Validation Started ===")
+
+        data_validation_config = DataValidationConfig(training_pipeline_config)
+        data_validation = DataValidation(
+            data_validation_config=data_validation_config,
+            data_ingestion_artifact=data_ingestion_artifact,
+        )
+
+        logging.info("Initiating data validation...")
+        data_validation_artifact = data_validation.initiate_data_validation()
+
+        logging.info("Data validation completed successfully.")
+        logging.info(f"DataValidationArtifact: {data_validation_artifact}")
+        print("\nData Validation Artifact:")
+        print(data_validation_artifact)
+
+        logging.info("=== VisionInfantNet: Data Validation Finished ===")
+        #logging.info("=== VisionInfantNet: Pipeline Finished Successfully ===")
+
     except Exception as e:
-        logging.exception("Error occurred in data ingestion pipeline.")
+        logging.exception("Error occurred in VisionInfantNet pipeline.")
         raise VisionInfantNetException(e, sys)
