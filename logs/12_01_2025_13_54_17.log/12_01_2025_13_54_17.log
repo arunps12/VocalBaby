@@ -1,0 +1,29 @@
+[ 2025-12-01 13:54:17,455 ] 11 root - INFO - === VisionInfantNet: Data Ingestion Pipeline Started ===
+[ 2025-12-01 13:54:17,455 ] 22 root - INFO - Initiating data ingestion...
+[ 2025-12-01 13:54:17,455 ] 141 root - INFO - ===== Data Ingestion Started =====
+[ 2025-12-01 13:54:17,607 ] 41 root - INFO - Loaded metadata (13478 rows) and saved snapshot to: artifacts/12_01_2025_13_54_17/data_ingestion/full_metadata.csv
+[ 2025-12-01 13:54:17,607 ] 55 root - INFO - Starting child-disjoint splitting...
+[ 2025-12-01 13:54:17,618 ] 87 root - INFO - train split created with 3600 samples.
+[ 2025-12-01 13:54:17,620 ] 31 root - ERROR - Error occurred in data ingestion pipeline.
+Traceback (most recent call last):
+  File "/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_ingestion.py", line 74, in create_child_disjoint_split
+    for label, count in self.config.split_counts[split].items():
+KeyError: 'valid'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_ingestion.py", line 147, in initiate_data_ingestion
+    splits = self.create_child_disjoint_split(df)
+  File "/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_ingestion.py", line 92, in create_child_disjoint_split
+    raise VisionInfantNetException(e, sys)
+visioninfantnet.exception.exception.VisionInfantNetException: Error occured in python script name [/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_ingestion.py] line number [74] error message ['valid']
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/itf-fi-ml/home/arunps/Projects/VisionInfantNet/main.py", line 23, in <module>
+    data_ingestion_artifact = data_ingestion.initiate_data_ingestion()
+  File "/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_ingestion.py", line 173, in initiate_data_ingestion
+    raise VisionInfantNetException(e, sys)
+visioninfantnet.exception.exception.VisionInfantNetException: Error occured in python script name [/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_ingestion.py] line number [147] error message [Error occured in python script name [/itf-fi-ml/home/arunps/Projects/VisionInfantNet/visioninfantnet/components/data_ingestion.py] line number [74] error message ['valid']]
