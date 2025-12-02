@@ -8,4 +8,11 @@ scikit-learn
 librosa
 pyaml
 Pillow
+torch
+torchvision
+torchaudio
+mlflow
+dagshub
+soundfile
+jupyter
 ## -e .
