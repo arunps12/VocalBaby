@@ -1,0 +1,12 @@
+[ 2025-12-02 12:53:34,311 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/user "HTTP/1.1 200 OK"
+[ 2025-12-02 12:53:34,319 ] 107 dagshub - INFO - Accessing as arunps12
+[ 2025-12-02 12:53:34,825 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/repos/arunps12/VisionInfantNet "HTTP/1.1 200 OK"
+[ 2025-12-02 12:53:35,400 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/user "HTTP/1.1 200 OK"
+[ 2025-12-02 12:53:35,402 ] 107 dagshub - INFO - Initialized MLflow to track repo "arunps12/VisionInfantNet"
+[ 2025-12-02 12:53:35,403 ] 107 dagshub - INFO - Repository arunps12/VisionInfantNet initialized!
+[ 2025-12-02 13:30:04,138 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/repos/arunps12/VisionInfantNet "HTTP/1.1 200 OK"
+[ 2025-12-02 13:30:04,141 ] 107 dagshub - INFO - Initialized MLflow to track repo "arunps12/VisionInfantNet"
+[ 2025-12-02 13:30:04,142 ] 107 dagshub - INFO - Repository arunps12/VisionInfantNet initialized!
+[ 2025-12-02 14:15:57,350 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/repos/arunps12/VisionInfantNet "HTTP/1.1 200 OK"
+[ 2025-12-02 14:15:57,357 ] 107 dagshub - INFO - Initialized MLflow to track repo "arunps12/VisionInfantNet"
+[ 2025-12-02 14:15:57,359 ] 107 dagshub - INFO - Repository arunps12/VisionInfantNet initialized!
