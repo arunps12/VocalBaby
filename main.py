@@ -2,7 +2,13 @@ import sys
 
 from visioninfantnet.components.data_ingestion import DataIngestion
 from visioninfantnet.components.data_validation import DataValidation
-from visioninfantnet.entity.config_entity import TrainingPipelineConfig, DataIngestionConfig,DataValidationConfig
+from visioninfantnet.components.data_transformation import DataTransformation
+from visioninfantnet.entity.config_entity import (
+    TrainingPipelineConfig,
+    DataIngestionConfig,
+    DataValidationConfig,
+    DataTransformationConfig,
+)
 from visioninfantnet.exception.exception import VisionInfantNetException
 from visioninfantnet.logging.logger import logging
 
@@ -23,7 +29,8 @@ if __name__ == "__main__":
         logging.info("Initiating data ingestion...")
         data_ingestion_artifact = data_ingestion.initiate_data_ingestion()
         logging.info("Data ingestion completed successfully.")
-
+        logging.info(f"DataIngestionArtifact: {data_ingestion_artifact}")
+        print("\nData Ingestion Artifact:")
         print(data_ingestion_artifact)
 
         logging.info("=== VisionInfantNet: Data Ingestion Pipeline Finished ===")
@@ -45,8 +52,29 @@ if __name__ == "__main__":
         print(data_validation_artifact)
 
         logging.info("=== VisionInfantNet: Data Validation Finished ===")
+
+
+        logging.info("=== VisionInfantNet: Data Transforamtion Started ===")
+        data_transformation_config = DataTransformationConfig(training_pipeline_config)
+        data_transformation = DataTransformation(
+            data_transformation_config=data_transformation_config,
+            data_validation_artifact=data_validation_artifact,
+        )
+        logging.info("Initiating data transforamtion...")
+        data_transformation_artifact = data_transformation.initiate_data_transformation()
+
+        logging.info("Data transformation completed successfully.")
+        logging.info(f"DataTransformationArtifact: {data_transformation_artifact}")
+        print("\nData Transformation Artifact:")
+        print(data_transformation_artifact)
+        logging.info("=== VisionInfantNet: Data Transforamtion Finished ===")
+
         #logging.info("=== VisionInfantNet: Pipeline Finished Successfully ===")
+       
 
     except Exception as e:
         logging.exception("Error occurred in VisionInfantNet pipeline.")
         raise VisionInfantNetException(e, sys)
+
+
+        

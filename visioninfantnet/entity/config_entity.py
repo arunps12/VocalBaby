@@ -168,3 +168,75 @@ class DataValidationConfig:
         
 
         self.schema_file_path: str = training_pipeline.SCHEMA_FILE_PATH
+
+
+
+from visioninfantnet.constant import training_pipeline
+
+# ... TrainingPipelineConfig, DataIngestionConfig, DataValidationConfig ...
+
+
+class DataTransformationConfig:
+    """
+    Paths for saving transformed numpy features and spectrogram images.
+    """
+
+    def __init__(self, training_pipeline_config: TrainingPipelineConfig):
+
+       
+        self.data_transformation_dir: str = os.path.join(
+            training_pipeline_config.artifact_dir,
+            training_pipeline.DATA_TRANSFORMATION_DIR_NAME,
+        )
+
+        
+        self.feature_dir: str = os.path.join(
+            self.data_transformation_dir,
+            training_pipeline.DATA_TRANSFORMATION_FEATURE_DIR,
+        )
+
+        
+        self.train_feature_file_path: str = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TRAIN_FEATURE_FILE,
+        )
+        self.valid_feature_file_path: str = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_VALID_FEATURE_FILE,
+        )
+        self.test_feature_file_path: str = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TEST_FEATURE_FILE,
+        )
+
+        self.train_label_file_path: str = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TRAIN_LABEL_FILE,
+        )
+        self.valid_label_file_path: str = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_VALID_LABEL_FILE,
+        )
+        self.test_label_file_path: str = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TEST_LABEL_FILE,
+        )
+
+        
+        self.spectrogram_base_dir: str = os.path.join(
+            self.data_transformation_dir,
+            training_pipeline.DATA_TRANSFORMATION_SPECTROGRAM_DIR,
+        )
+
+        self.train_spectrogram_dir: str = os.path.join(
+            self.spectrogram_base_dir,
+            training_pipeline.DATA_TRANSFORMATION_TRAIN_SPECTROGRAM_DIR,
+        )
+        self.valid_spectrogram_dir: str = os.path.join(
+            self.spectrogram_base_dir,
+            training_pipeline.DATA_TRANSFORMATION_VALID_SPECTROGRAM_DIR,
+        )
+        self.test_spectrogram_dir: str = os.path.join(
+            self.spectrogram_base_dir,
+            training_pipeline.DATA_TRANSFORMATION_TEST_SPECTROGRAM_DIR,
+        )

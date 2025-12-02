@@ -90,3 +90,32 @@ DATA_VALIDATION_REPORT_FILE: str = "validation_report.yaml"
 
 DATA_VALIDATION_DRIFT_REPORT_DIR: str = "drift_report"
 DATA_VALIDATION_DRIFT_REPORT_FILE_NAME: str = "drift_report.yaml"
+
+"""
+Data Transformation related constants start with DATA_TRANSFORMATION_ VAR NAME
+"""
+
+DATA_TRANSFORMATION_DIR_NAME: str = "data_transformation"
+
+# numpy feature arrays store path (per split)
+DATA_TRANSFORMATION_FEATURE_DIR: str = "features"
+
+DATA_TRANSFORMATION_TRAIN_FEATURE_FILE: str = "train_features.npy"
+DATA_TRANSFORMATION_VALID_FEATURE_FILE: str = "valid_features.npy"
+DATA_TRANSFORMATION_TEST_FEATURE_FILE: str = "test_features.npy"
+
+DATA_TRANSFORMATION_TRAIN_LABEL_FILE: str = "train_labels.npy"
+DATA_TRANSFORMATION_VALID_LABEL_FILE: str = "valid_labels.npy"
+DATA_TRANSFORMATION_TEST_LABEL_FILE: str = "test_labels.npy"
+
+# spectrogram image directories 
+DATA_TRANSFORMATION_SPECTROGRAM_DIR: str = "spectrograms"
+DATA_TRANSFORMATION_TRAIN_SPECTROGRAM_DIR: str = "train"
+DATA_TRANSFORMATION_VALID_SPECTROGRAM_DIR: str = "valid"
+DATA_TRANSFORMATION_TEST_SPECTROGRAM_DIR: str = "test"
+
+# Audio / spectrogram hyperparameters
+TARGET_SAMPLE_RATE: int = 16000
+N_FFT: int = 512
+HOP_LENGTH: int = 160
+N_MELS: int = 64

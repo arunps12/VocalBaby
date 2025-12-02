@@ -7,4 +7,5 @@ seaborn
 scikit-learn
 librosa
 pyaml
+Pillow
 ## -e .
