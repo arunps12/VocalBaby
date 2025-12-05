@@ -110,6 +110,7 @@ ENV/
 env.bak/
 venv.bak/
 venv_old_broken/
+venv_old/
 
 
 # Spyder project settings
@@ -144,3 +145,5 @@ dmypy.json
 *.pth
 *.h5
 *.pkl
+# notebook
+*.ipynb

@@ -15,4 +15,8 @@ mlflow
 dagshub
 soundfile
 jupyter
-## -e .
+timm
+resampy
+torch-vggish-yamnet
+torchcodec
+##-e .
