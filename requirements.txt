@@ -20,23 +20,7 @@ torch-vggish-yamnet
 mlflow
 dagshub
 Pillow
+opensmile
 
-# =============================================================================
-# Classical Audio Feature Extractors (NOT pip installable)
-# =============================================================================
-# openSMILE : ComParE / eGeMAPS
-# Download manually:
-# https://github.com/audeering/opensmile
-
-# openXBOW : Bag-of-Audio-Words (BoAW)
-# Download manually:
-# https://github.com/openXBOW/openXBOW
-
-# =============================================================================
-# AUDEEP (Optional – requires TensorFlow 1.x; incompatible with Python >= 3.10)
-# =============================================================================
-# audeep==0.2.1
-# tensorflow==1.15.5
-# Recommended: run AUDEEP in a separate Python 3.7/3.8 environment
 
 #-e .

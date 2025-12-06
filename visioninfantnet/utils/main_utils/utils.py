@@ -48,10 +48,3 @@ def save_numpy_array_data(file_path: str, array: np.ndarray) -> None:
 
 
 
-def run_command(command: list):
-    
-    try:
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        return result.stdout.decode()
-    except Exception as e:
-        raise VisionInfantNetException(f"Command failed: {' '.join(command)}\n{e}", sys)
