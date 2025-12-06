@@ -17,10 +17,10 @@ timm
 torchcodec          
 panns-inference     
 torch-vggish-yamnet 
-mlflow
+mlflow<2.17.0
 dagshub
 Pillow
 opensmile
-
+xgboost
 
 #-e .
