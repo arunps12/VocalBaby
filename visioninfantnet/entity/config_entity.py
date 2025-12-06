@@ -171,72 +171,201 @@ class DataValidationConfig:
 
 
 
-from visioninfantnet.constant import training_pipeline
-
-# ... TrainingPipelineConfig, DataIngestionConfig, DataValidationConfig ...
-
 
 class DataTransformationConfig:
     """
-    Paths for saving transformed numpy features and spectrogram images.
+    Configuration for saving transformed features:
+    - image features (224x224x3)
+    - raw mel-spectrogram features (n_mels x T)
+    - classical features (ComParE, BoAW, AUDEEP, FV)
+    - PNG spectrogram images
     """
 
     def __init__(self, training_pipeline_config: TrainingPipelineConfig):
 
-       
-        self.data_transformation_dir: str = os.path.join(
+        # =========================================================================
+        # Root directory for all transformation artifacts
+        # =========================================================================
+        self.data_transformation_dir = os.path.join(
             training_pipeline_config.artifact_dir,
             training_pipeline.DATA_TRANSFORMATION_DIR_NAME,
         )
 
-        
-        self.feature_dir: str = os.path.join(
+        # =========================================================================
+        # Feature directory (all .npy matrices saved here)
+        # =========================================================================
+        self.feature_dir = os.path.join(
             self.data_transformation_dir,
             training_pipeline.DATA_TRANSFORMATION_FEATURE_DIR,
         )
 
-        
-        self.train_feature_file_path: str = os.path.join(
+        # -------------------------------------------------------------------------
+        # 1) IMAGE FEATURES (.npy)
+        # -------------------------------------------------------------------------
+        self.train_image_feature_file_path = os.path.join(
             self.feature_dir,
-            training_pipeline.DATA_TRANSFORMATION_TRAIN_FEATURE_FILE,
+            training_pipeline.DATA_TRANSFORMATION_TRAIN_IMAGE_FEATURE_FILE,
         )
-        self.valid_feature_file_path: str = os.path.join(
+        self.valid_image_feature_file_path = os.path.join(
             self.feature_dir,
-            training_pipeline.DATA_TRANSFORMATION_VALID_FEATURE_FILE,
+            training_pipeline.DATA_TRANSFORMATION_VALID_IMAGE_FEATURE_FILE,
         )
-        self.test_feature_file_path: str = os.path.join(
+        self.test_image_feature_file_path = os.path.join(
             self.feature_dir,
-            training_pipeline.DATA_TRANSFORMATION_TEST_FEATURE_FILE,
+            training_pipeline.DATA_TRANSFORMATION_TEST_IMAGE_FEATURE_FILE,
         )
 
-        self.train_label_file_path: str = os.path.join(
+        # -------------------------------------------------------------------------
+        # 2) RAW MEL-SPECTROGRAM FEATURES (.npy)
+        # -------------------------------------------------------------------------
+        self.train_spectrogram_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TRAIN_SPECTROGRAM_FEATURE_FILE,
+        )
+        self.valid_spectrogram_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_VALID_SPECTROGRAM_FEATURE_FILE,
+        )
+        self.test_spectrogram_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TEST_SPECTROGRAM_FEATURE_FILE,
+        )
+
+        # -------------------------------------------------------------------------
+        # 3) CLASSICAL FEATURES (.npy) — ComParE, BoAW, AUDEEP, FV
+        # -------------------------------------------------------------------------
+
+        # --- ComParE ---
+        self.train_compare_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TRAIN_COMPARE_FEATURE_FILE,
+        )
+        self.valid_compare_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_VALID_COMPARE_FEATURE_FILE,
+        )
+        self.test_compare_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TEST_COMPARE_FEATURE_FILE,
+        )
+
+        # --- BoAW ---
+        self.train_boaw_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TRAIN_BOAW_FEATURE_FILE,
+        )
+        self.valid_boaw_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_VALID_BOAW_FEATURE_FILE,
+        )
+        self.test_boaw_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TEST_BOAW_FEATURE_FILE,
+        )
+
+        # --- AUDEEP ---
+        self.train_audeep_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TRAIN_AUDEEP_FEATURE_FILE,
+        )
+        self.valid_audeep_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_VALID_AUDEEP_FEATURE_FILE,
+        )
+        self.test_audeep_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TEST_AUDEEP_FEATURE_FILE,
+        )
+
+        # --- Fisher Vectors ---
+        self.train_fv_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TRAIN_FV_FEATURE_FILE,
+        )
+        self.valid_fv_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_VALID_FV_FEATURE_FILE,
+        )
+        self.test_fv_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TEST_FV_FEATURE_FILE,
+        )
+
+        # =========================================================================
+        # 4) LABEL FILES (.npy)
+        # =========================================================================
+        self.train_label_file_path = os.path.join(
             self.feature_dir,
             training_pipeline.DATA_TRANSFORMATION_TRAIN_LABEL_FILE,
         )
-        self.valid_label_file_path: str = os.path.join(
+        self.valid_label_file_path = os.path.join(
             self.feature_dir,
             training_pipeline.DATA_TRANSFORMATION_VALID_LABEL_FILE,
         )
-        self.test_label_file_path: str = os.path.join(
+        self.test_label_file_path = os.path.join(
             self.feature_dir,
             training_pipeline.DATA_TRANSFORMATION_TEST_LABEL_FILE,
         )
 
-        
-        self.spectrogram_base_dir: str = os.path.join(
+        # =========================================================================
+        # 5) SPECTROGRAM IMAGE DIRECTORIES (PNG images)
+        # =========================================================================
+        self.spectrogram_image_base_dir = os.path.join(
             self.data_transformation_dir,
-            training_pipeline.DATA_TRANSFORMATION_SPECTROGRAM_DIR,
+            training_pipeline.DATA_TRANSFORMATION_SPECTROGRAM_IMAGE_DIR,
         )
 
-        self.train_spectrogram_dir: str = os.path.join(
-            self.spectrogram_base_dir,
-            training_pipeline.DATA_TRANSFORMATION_TRAIN_SPECTROGRAM_DIR,
+        self.train_spectrogram_image_dir = os.path.join(
+            self.spectrogram_image_base_dir,
+            training_pipeline.DATA_TRANSFORMATION_TRAIN_SPECTROGRAM_IMAGE_SUBDIR,
         )
-        self.valid_spectrogram_dir: str = os.path.join(
-            self.spectrogram_base_dir,
-            training_pipeline.DATA_TRANSFORMATION_VALID_SPECTROGRAM_DIR,
+        self.valid_spectrogram_image_dir = os.path.join(
+            self.spectrogram_image_base_dir,
+            training_pipeline.DATA_TRANSFORMATION_VALID_SPECTROGRAM_IMAGE_SUBDIR,
         )
-        self.test_spectrogram_dir: str = os.path.join(
-            self.spectrogram_base_dir,
-            training_pipeline.DATA_TRANSFORMATION_TEST_SPECTROGRAM_DIR,
+        self.test_spectrogram_image_dir = os.path.join(
+            self.spectrogram_image_base_dir,
+            training_pipeline.DATA_TRANSFORMATION_TEST_SPECTROGRAM_IMAGE_SUBDIR,
+        )
+
+        # --- PANNs ---
+        self.train_panns_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TRAIN_PANNS_FEATURE_FILE,
+        )
+        self.valid_panns_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_VALID_PANNS_FEATURE_FILE,
+        )
+        self.test_panns_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TEST_PANNS_FEATURE_FILE,
+        )
+
+        # --- YAMNet ---
+        self.train_yamnet_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TRAIN_YAMNET_FEATURE_FILE,
+        )
+        self.valid_yamnet_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_VALID_YAMNET_FEATURE_FILE,
+        )
+        self.test_yamnet_feature_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TEST_YAMNET_FEATURE_FILE,
+        )
+
+        # --- Image embeddings (ResNet50) ---
+        self.train_image_embedding_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TRAIN_IMAGE_EMB_FEATURE_FILE,
+        )
+        self.valid_image_embedding_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_VALID_IMAGE_EMB_FEATURE_FILE,
+        )
+        self.test_image_embedding_file_path = os.path.join(
+            self.feature_dir,
+            training_pipeline.DATA_TRANSFORMATION_TEST_IMAGE_EMB_FEATURE_FILE,
         )

@@ -2,6 +2,7 @@ import yaml
 import os
 import sys
 import numpy as np
+import subprocess
 
 from visioninfantnet.exception.exception import VisionInfantNetException
 
@@ -43,3 +44,14 @@ def save_numpy_array_data(file_path: str, array: np.ndarray) -> None:
 
     except Exception as e:
         raise VisionInfantNetException(e, sys)
+
+
+
+
+def run_command(command: list):
+    
+    try:
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        return result.stdout.decode()
+    except Exception as e:
+        raise VisionInfantNetException(f"Command failed: {' '.join(command)}\n{e}", sys)
