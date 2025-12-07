@@ -22,5 +22,6 @@ dagshub
 Pillow
 opensmile
 xgboost
+imbalanced-learn
 
 #-e .

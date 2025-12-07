@@ -146,3 +146,11 @@ dmypy.json
 *.h5
 *.pkl
 # notebook
+
+#image files
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.tiff
+*.gif
