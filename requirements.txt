@@ -23,5 +23,6 @@ Pillow
 opensmile
 xgboost
 imbalanced-learn
+optuna
 
 #-e .
