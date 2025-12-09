@@ -181,3 +181,34 @@ TARGET_SAMPLE_RATE: int = 16000
 N_FFT: int = 512
 HOP_LENGTH: int = 160
 N_MELS: int = 64
+
+
+"""
+Training pipeline constants.
+
+Model trainer related constants start with MODEL_TRAINER_*
+"""
+
+# Root directory inside artifacts for everything related to model training
+MODEL_TRAINER_DIR_NAME: str = "model_trainer"
+
+# Subdirectory where the final trained model will be stored
+MODEL_TRAINER_TRAINED_MODEL_DIR: str = "trained_model"
+
+# File name of the final trained model (XGBoost best model on eGeMAPS+SMOTE+Optuna)
+MODEL_TRAINER_TRAINED_MODEL_NAME: str = "xgb_egemaps_smote_optuna.pkl"
+
+# Directory (inside model_trainer) where preprocessing objects are stored
+MODEL_TRAINER_PREPROCESSING_DIR: str = "preprocessing"
+
+# File name for the preprocessing object (e.g., SimpleImputer, scaler, encoder, etc.)
+PREPROCESSING_OBJECT_FILE_NAME: str = "preprocessing.pkl"
+
+# CONFUSION MATRIX FILES
+MODEL_TRAINER_CONFUSION_MATRIX_DIR: str = "confusion_matrices"
+MODEL_TRAINER_TRAIN_CM_FILE_NAME: str = "train_cm.png"
+MODEL_TRAINER_VALID_CM_FILE_NAME: str = "valid_cm.png"
+MODEL_TRAINER_TEST_CM_FILE_NAME: str = "test_cm.png"
+
+#  remote bucket (S3) for model artifacts
+TRAINING_BUCKET_NAME: str = "visioninfantnet"

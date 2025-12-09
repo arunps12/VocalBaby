@@ -369,3 +369,58 @@ class DataTransformationConfig:
             self.feature_dir,
             training_pipeline.DATA_TRANSFORMATION_TEST_IMAGE_EMB_FEATURE_FILE,
         )
+
+
+class ModelTrainerConfig:
+    """
+    Configuration for Model Trainer Component:
+    - Where to save trained model
+    - Where to save preprocessing object (SimpleImputer)
+    - Where model_trainer directory lives inside artifacts/
+    """
+
+    def __init__(self, training_pipeline_config: TrainingPipelineConfig):
+
+        # model_trainer/
+        self.model_trainer_dir: str = os.path.join(
+            training_pipeline_config.artifact_dir,
+            training_pipeline.MODEL_TRAINER_DIR_NAME
+        )
+
+        # model_trainer/trained_model/model.pkl
+        self.trained_model_file_path: str = os.path.join(
+            self.model_trainer_dir,
+            training_pipeline.MODEL_TRAINER_TRAINED_MODEL_DIR,
+            training_pipeline.MODEL_TRAINER_TRAINED_MODEL_NAME
+        )
+
+        # model_trainer/preprocessing/preprocessing.pkl
+        self.preprocessing_object_file_path: str = os.path.join(
+            self.model_trainer_dir,
+            training_pipeline.MODEL_TRAINER_PREPROCESSING_DIR,
+            training_pipeline.PREPROCESSING_OBJECT_FILE_NAME
+        )
+        
+        # confusion matrix paths
+        self.confusion_matrix_dir: str = os.path.join(
+            self.model_trainer_dir,
+            training_pipeline.MODEL_TRAINER_CONFUSION_MATRIX_DIR,
+        )
+
+        self.train_confusion_matrix_path: str = os.path.join(
+            self.confusion_matrix_dir,
+            training_pipeline.MODEL_TRAINER_TRAIN_CM_FILE_NAME,
+        )
+
+        self.valid_confusion_matrix_path: str = os.path.join(
+            self.confusion_matrix_dir,
+            training_pipeline.MODEL_TRAINER_VALID_CM_FILE_NAME,
+        )
+
+        self.test_confusion_matrix_path: str = os.path.join(
+            self.confusion_matrix_dir,
+            training_pipeline.MODEL_TRAINER_TEST_CM_FILE_NAME,
+        )
+
+        # bucket name (for pushing model to cloud storage)
+        self.bucket_name: str = training_pipeline.TRAINING_BUCKET_NAME

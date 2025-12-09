@@ -93,3 +93,19 @@ class ClassificationMetricArtifact:
     precision_score: float
     recall_score: float
     uar: float # Unweighted Average Recall
+
+
+@dataclass
+class ModelTrainerArtifact:
+    
+
+    trained_model_file_path: str
+    preprocessing_object_file_path: str
+
+    train_metric_artifact: ClassificationMetricArtifact
+    valid_metric_artifact: ClassificationMetricArtifact
+    test_metric_artifact: ClassificationMetricArtifact
+
+    train_confusion_matrix_path: str
+    valid_confusion_matrix_path: str
+    test_confusion_matrix_path: str
