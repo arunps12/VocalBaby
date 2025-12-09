@@ -46,7 +46,32 @@ def save_numpy_array_data(file_path: str, array: np.ndarray) -> None:
     except Exception as e:
         raise VisionInfantNetException(e, sys)
 
+def load_numpy_array_data(file_path: str) -> np.ndarray:
+    """
+    Load numpy array data from file_path using np.load.
+    """
+    try:
+        if not os.path.exists(file_path):
+            raise Exception(f"The file does not exist: {file_path}")
 
+        with open(file_path, "rb") as file_obj:
+            return np.load(file_obj, allow_pickle=True)
+    except Exception as e:
+        raise VisionInfantNetException(e, sys)
+    
+
+def save_object(file_path: str, obj: object) -> None:
+    """
+    Save a Python object (model, imputer, encoder, etc.) using pickle.
+    """
+    try:
+        dir_path = os.path.dirname(file_path)
+        os.makedirs(dir_path, exist_ok=True)
+
+        with open(file_path, "wb") as file_obj:
+            pickle.dump(obj, file_obj)
+    except Exception as e:
+        raise VisionInfantNetException(e, sys)
 
 def load_object(file_path: str) -> object:
     try:
