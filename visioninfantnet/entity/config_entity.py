@@ -400,7 +400,14 @@ class ModelTrainerConfig:
             training_pipeline.MODEL_TRAINER_PREPROCESSING_DIR,
             training_pipeline.PREPROCESSING_OBJECT_FILE_NAME
         )
-        
+
+        # model_trainer/preprocessing/label_encoder.pkl
+        self.label_encoder_file_path: str = os.path.join(
+            self.model_trainer_dir,
+            training_pipeline.MODEL_TRAINER_PREPROCESSING_DIR,
+            training_pipeline.LABEL_ENCODER_OBJECT_FILE_NAME
+        )
+
         # confusion matrix paths
         self.confusion_matrix_dir: str = os.path.join(
             self.model_trainer_dir,

@@ -204,6 +204,9 @@ MODEL_TRAINER_PREPROCESSING_DIR: str = "preprocessing"
 # File name for the preprocessing object (e.g., SimpleImputer, scaler, encoder, etc.)
 PREPROCESSING_OBJECT_FILE_NAME: str = "preprocessing.pkl"
 
+# File name for the label encoder object
+LABEL_ENCODER_OBJECT_FILE_NAME: str = "label_encoder.pkl"
+
 # CONFUSION MATRIX FILES
 MODEL_TRAINER_CONFUSION_MATRIX_DIR: str = "confusion_matrices"
 MODEL_TRAINER_TRAIN_CM_FILE_NAME: str = "train_cm.png"

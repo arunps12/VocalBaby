@@ -101,6 +101,7 @@ class ModelTrainerArtifact:
 
     trained_model_file_path: str
     preprocessing_object_file_path: str
+    label_encoder_file_path: str
 
     train_metric_artifact: ClassificationMetricArtifact
     valid_metric_artifact: ClassificationMetricArtifact

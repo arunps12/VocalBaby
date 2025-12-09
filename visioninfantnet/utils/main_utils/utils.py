@@ -2,6 +2,7 @@ import yaml
 import os
 import sys
 import numpy as np
+import pickle
 import subprocess
 
 from visioninfantnet.exception.exception import VisionInfantNetException
@@ -47,4 +48,28 @@ def save_numpy_array_data(file_path: str, array: np.ndarray) -> None:
 
 
 
+def load_object(file_path: str) -> object:
+    try:
+        if not os.path.exists(file_path):
+            raise Exception(f"The file does not exist: {file_path}")
+        with open(file_path, "rb") as file_obj:
+            return pickle.load(file_obj)
+    except Exception as e:
+        raise VisionInfantNetException(e, sys)
 
+
+def get_latest_artifact_dir(root_dir: str) -> str:
+    """
+    Return the latest (by mtime) subdirectory inside artifacts root.
+    """
+    try:
+        subdirs = [
+            os.path.join(root_dir, d)
+            for d in os.listdir(root_dir)
+            if os.path.isdir(os.path.join(root_dir, d))
+        ]
+        if not subdirs:
+            raise Exception(f"No subdirectories found in {root_dir}")
+        return max(subdirs, key=os.path.getmtime)
+    except Exception as e:
+        raise VisionInfantNetException(e, sys)
