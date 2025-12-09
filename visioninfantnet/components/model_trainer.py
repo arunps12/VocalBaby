@@ -3,6 +3,10 @@ import sys
 import numpy as np
 
 from xgboost import XGBClassifier
+import mlflow
+import mlflow.sklearn
+import dagshub
+from urllib.parse import urlparse
 
 from visioninfantnet.exception.exception import VisionInfantNetException
 from visioninfantnet.logging.logger import logging
@@ -11,6 +15,7 @@ from visioninfantnet.entity.config_entity import ModelTrainerConfig
 from visioninfantnet.entity.artifact_entity import (
     DataTransformationArtifact,
     ModelTrainerArtifact,
+    ClassificationMetricArtifact,
 )
 from visioninfantnet.utils.main_utils.utils import (
     load_numpy_array_data,
@@ -51,23 +56,15 @@ BEST_XGB_PARAMS = {
     "reg_alpha": 3.631533545994319,
 }
 
+# Initialize DagsHub + MLflow tracking
+dagshub.init(repo_owner="arunps12", repo_name="VisionInfantNet", mlflow=True)
+print("MLflow + DagsHub initialized.")
 
 class ModelTrainer:
     """
     Model Trainer for XGBoost on eGeMAPS features with SMOTE.
-
-    Pipeline:
-    ---------
-    1. Load eGeMAPS features and labels (train/valid/test) from DataTransformationArtifact
-    2. Impute missing values (SimpleImputer, median)
-    3. Apply SMOTE on training set only
-    4. Train XGBClassifier with fixed best params from Optuna
-    5. Evaluate on train/valid/test
-    6. Save:
-        - trained model (pickle)
-        - preprocessing object (imputer)
-        - confusion matrices (train/valid/test PNG)
-    7. Return ModelTrainerArtifact
+    Fixed best hyperparameters from previous Optuna tuning
+    Experiment: 06_xgboost_egemaps_smote_optuna_experiment.ipynb
     """
 
     def __init__(
@@ -78,6 +75,20 @@ class ModelTrainer:
         try:
             self.model_trainer_config = model_trainer_config
             self.data_transformation_artifact = data_transformation_artifact
+
+            # Fixed best params from Optuna (Trial 24)
+            self.best_params = {
+                "max_depth": 4,
+                "learning_rate": 0.01310361913002795,
+                "n_estimators": 737,
+                "subsample": 0.6185127156068264,
+                "colsample_bytree": 0.6972153039737041,
+                "gamma": 1.6324639148961462,
+                "min_child_weight": 1,
+                "reg_lambda": 0.057931609965269915,
+                "reg_alpha": 3.631533545994319,
+            }
+
         except Exception as e:
             raise VisionInfantNetException(e, sys)
 
@@ -139,24 +150,83 @@ class ModelTrainer:
     # ------------------------------------------------------------------
     def _build_model(self) -> XGBClassifier:
         """
-        Create an XGBClassifier instance with the best hyperparameters
-        found previously via Optuna.
+        Build XGBClassifier with fixed best parameters from Optuna.
         """
-        try:
-            logging.info("Building XGBClassifier with fixed best parameters...")
+        params = self.best_params
 
-            model = XGBClassifier(
-                **BEST_XGB_PARAMS,
-                objective="multi:softprob",
-                eval_metric="mlogloss",
-                tree_method="hist",
-                random_state=42,
-                n_jobs=-1,
-            )
-            return model
+        model = XGBClassifier(
+            max_depth=params["max_depth"],
+            learning_rate=params["learning_rate"],
+            n_estimators=params["n_estimators"],
+            subsample=params["subsample"],
+            colsample_bytree=params["colsample_bytree"],
+            gamma=params["gamma"],
+            min_child_weight=params["min_child_weight"],
+            reg_lambda=params["reg_lambda"],
+            reg_alpha=params["reg_alpha"],
+            objective="multi:softprob",
+            eval_metric="mlogloss",
+            tree_method="hist",
+            random_state=42,
+            n_jobs=-1,
+        )
+        return model
 
-        except Exception as e:
-            raise VisionInfantNetException(e, sys)
+        # ------------------------------------------------------------------
+    # MLflow / DagsHub tracking
+    # ------------------------------------------------------------------
+    def _log_to_mlflow(
+        self,
+        model,
+        train_metrics: ClassificationMetricArtifact,
+        valid_metrics: ClassificationMetricArtifact,
+        test_metrics: ClassificationMetricArtifact,
+    ):
+        """
+        Log params, metrics, confusion matrices, and model to MLflow (DagsHub).
+        """
+        # set registry URI 
+        tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
+
+        run_name = "xgb_egemaps_smote_optuna_best"
+
+        with mlflow.start_run(run_name=run_name):
+
+            # ---- Log hyperparameters  ----
+            for k, v in self.best_params.items():
+                mlflow.log_param(k, v)
+
+            # ---- Log metrics (valid + test like) ----
+         
+            # Valid
+            mlflow.log_metric("valid_uar", valid_metrics.uar)
+            mlflow.log_metric("valid_f1", valid_metrics.f1_score)
+            mlflow.log_metric("valid_precision", valid_metrics.precision_score)
+            mlflow.log_metric("valid_recall", valid_metrics.recall_score)
+
+            # Test
+            mlflow.log_metric("test_uar", test_metrics.uar)
+            mlflow.log_metric("test_f1", test_metrics.f1_score)
+            mlflow.log_metric("test_precision", test_metrics.precision_score)
+            mlflow.log_metric("test_recall", test_metrics.recall_score)
+
+            # ---- Log confusion matrix images as artifacts ----
+            mlflow.log_artifact(self.model_trainer_config.train_confusion_matrix_path)
+            mlflow.log_artifact(self.model_trainer_config.valid_confusion_matrix_path)
+            mlflow.log_artifact(self.model_trainer_config.test_confusion_matrix_path)
+
+            # ---- Log model ----
+            mlflow.sklearn.log_model(model, "model")
+
+            
+            if tracking_url_type_store != "file":
+                mlflow.sklearn.log_model(
+                     model,
+                     "model",
+                     registered_model_name="xgb_egemaps_smote_optuna_best",
+                 )
+
+        print("MLflow logging completed.")
 
     # ------------------------------------------------------------------
     #  training + evaluation
@@ -317,6 +387,14 @@ class ModelTrainer:
                 train_confusion_matrix_path=self.model_trainer_config.train_confusion_matrix_path,
                 valid_confusion_matrix_path=self.model_trainer_config.valid_confusion_matrix_path,
                 test_confusion_matrix_path=self.model_trainer_config.test_confusion_matrix_path,
+            )
+
+            #  Log to MLflow / DagsHub
+            self._log_to_mlflow(
+                model=model,
+                train_metrics=train_metrics,
+                valid_metrics=valid_metrics,
+                test_metrics=test_metrics,
             )
 
             logging.info(f"ModelTrainerArtifact: {model_trainer_artifact}")
