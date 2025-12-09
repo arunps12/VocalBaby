@@ -1,0 +1,30 @@
+[ 2025-12-09 17:19:58,238 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/user "HTTP/1.1 200 OK"
+[ 2025-12-09 17:19:58,242 ] 107 dagshub - INFO - Accessing as arunps12
+[ 2025-12-09 17:19:58,692 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/repos/arunps12/VisionInfantNet "HTTP/1.1 200 OK"
+[ 2025-12-09 17:19:59,103 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/user "HTTP/1.1 200 OK"
+[ 2025-12-09 17:19:59,104 ] 107 dagshub - INFO - Initialized MLflow to track repo "arunps12/VisionInfantNet"
+[ 2025-12-09 17:19:59,105 ] 107 dagshub - INFO - Repository arunps12/VisionInfantNet initialized!
+[ 2025-12-09 17:20:37,751 ] 132 root - INFO - === /predict endpoint called ===
+[ 2025-12-09 17:20:37,757 ] 150 root - INFO - Saved 2 uploaded audio files to uploaded_audio.
+[ 2025-12-09 17:20:37,761 ] 70 root - INFO - Using latest model_trainer dir: artifacts/12_09_2025_16_03_43/model_trainer
+[ 2025-12-09 17:20:37,761 ] 37 root - INFO - Initializing PredictionPipeline with dir: artifacts/12_09_2025_16_03_43/model_trainer
+[ 2025-12-09 17:20:38,145 ] 64 root - INFO - PredictionPipeline initialized successfully.
+[ 2025-12-09 17:20:38,145 ] 166 root - INFO - Starting prediction for audio source.
+[ 2025-12-09 17:20:38,145 ] 170 root - INFO - Resolved 2 audio files for prediction.
+[ 2025-12-09 17:20:38,145 ] 126 root - INFO - Extracting eGeMAPS for 2 files...
+[ 2025-12-09 17:20:38,205 ] 134 root - INFO - eGeMAPS feature matrix shape: (2, 88)
+[ 2025-12-09 17:20:38,205 ] 176 root - INFO - Applying preprocessing to eGeMAPS features...
+[ 2025-12-09 17:20:38,205 ] 180 root - INFO - Running XGBoost model predictions...
+[ 2025-12-09 17:20:38,209 ] 184 root - INFO - Decoding predictions with LabelEncoder...
+[ 2025-12-09 17:20:38,210 ] 187 root - INFO - Prediction completed successfully.
+[ 2025-12-09 17:20:38,210 ] 177 root - INFO - Prediction completed for all uploaded files.
+[ 2025-12-09 17:24:05,905 ] 203 root - INFO - === /predict_zip endpoint called ===
+[ 2025-12-09 17:24:06,461 ] 215 root - INFO - Saved uploaded ZIP to uploaded_zips/clips_corpus.zip.
+[ 2025-12-09 17:24:06,462 ] 221 root - INFO - Extracting ZIP into /tmp/segments_8l2nuiqa...
+[ 2025-12-09 17:24:09,746 ] 240 root - INFO - Found 13478 .wav files in extracted ZIP.
+[ 2025-12-09 17:24:09,750 ] 70 root - INFO - Using latest model_trainer dir: artifacts/12_09_2025_16_03_43/model_trainer
+[ 2025-12-09 17:24:09,750 ] 37 root - INFO - Initializing PredictionPipeline with dir: artifacts/12_09_2025_16_03_43/model_trainer
+[ 2025-12-09 17:24:09,807 ] 64 root - INFO - PredictionPipeline initialized successfully.
+[ 2025-12-09 17:24:09,807 ] 166 root - INFO - Starting prediction for audio source.
+[ 2025-12-09 17:24:09,849 ] 170 root - INFO - Resolved 13478 audio files for prediction.
+[ 2025-12-09 17:24:09,849 ] 126 root - INFO - Extracting eGeMAPS for 13478 files...

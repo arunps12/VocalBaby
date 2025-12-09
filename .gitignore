@@ -154,3 +154,10 @@ dmypy.json
 *.bmp
 *.tiff
 *.gif
+
+# archives
+*.zip
+*.tar.gz
+*.rar
+*.tar
+*.7z

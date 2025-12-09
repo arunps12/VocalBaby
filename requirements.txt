@@ -24,5 +24,10 @@ opensmile
 xgboost
 imbalanced-learn
 optuna
+fastapi
+uvicorn
+python-multipart
+jinja2
+starlette
 
 #-e .
