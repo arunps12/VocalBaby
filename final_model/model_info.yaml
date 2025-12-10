@@ -1,11 +1,11 @@
 pipeline:
   name: VisionInfantNet
-  timestamp: '12_10_2025_11_25_34'
-  artifact_dir: artifacts/12_10_2025_11_25_34
+  timestamp: '12_10_2025_15_36_53'
+  artifact_dir: artifacts/12_10_2025_15_36_53
 artifacts:
-  trained_model_file_path: artifacts/12_10_2025_11_25_34/model_trainer/trained_model/xgb_egemaps_smote_optuna.pkl
-  preprocessing_object_file_path: artifacts/12_10_2025_11_25_34/model_trainer/preprocessing/preprocessing.pkl
-  label_encoder_file_path: artifacts/12_10_2025_11_25_34/model_trainer/preprocessing/label_encoder.pkl
+  trained_model_file_path: artifacts/12_10_2025_15_36_53/model_trainer/trained_model/xgb_egemaps_smote_optuna.pkl
+  preprocessing_object_file_path: artifacts/12_10_2025_15_36_53/model_trainer/preprocessing/preprocessing.pkl
+  label_encoder_file_path: artifacts/12_10_2025_15_36_53/model_trainer/preprocessing/label_encoder.pkl
 final_model:
   model_dir: final_model
   model_file: xgb_egemaps_smote_optuna.pkl

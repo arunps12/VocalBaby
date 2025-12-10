@@ -1,0 +1,79 @@
+[ 2025-12-10 15:26:29,629 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/user "HTTP/1.1 200 OK"
+[ 2025-12-10 15:26:29,633 ] 107 dagshub - INFO - Accessing as arunps12
+[ 2025-12-10 15:26:30,105 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/repos/arunps12/VisionInfantNet "HTTP/1.1 200 OK"
+[ 2025-12-10 15:26:30,539 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/user "HTTP/1.1 200 OK"
+[ 2025-12-10 15:26:30,540 ] 107 dagshub - INFO - Initialized MLflow to track repo "arunps12/VisionInfantNet"
+[ 2025-12-10 15:26:30,540 ] 107 dagshub - INFO - Repository arunps12/VisionInfantNet initialized!
+[ 2025-12-10 15:26:42,667 ] 145 root - INFO - === /train endpoint called: starting TrainingPipeline ===
+[ 2025-12-10 15:26:42,667 ] 198 root - INFO - === VisionInfantNet: Full Training Pipeline Started ===
+[ 2025-12-10 15:26:42,667 ] 58 root - INFO - === [TrainingPipeline] Data Ingestion: Started ===
+[ 2025-12-10 15:26:42,667 ] 141 root - INFO - ===== Data Ingestion Started =====
+[ 2025-12-10 15:26:42,797 ] 41 root - INFO - Loaded metadata (13478 rows) and saved snapshot to: artifacts/12_10_2025_15_26_12/data_ingestion/full_metadata.csv
+[ 2025-12-10 15:26:42,797 ] 55 root - INFO - Starting child-disjoint splitting...
+[ 2025-12-10 15:26:42,807 ] 87 root - INFO - train split created with 3600 samples.
+[ 2025-12-10 15:26:42,815 ] 87 root - INFO - valid split created with 3580 samples.
+[ 2025-12-10 15:26:42,824 ] 87 root - INFO - test split created with 3590 samples.
+[ 2025-12-10 15:26:57,053 ] 112 root - INFO - Copied 3600 audio files to: artifacts/12_10_2025_15_26_12/data_ingestion/ingested_audio/train
+[ 2025-12-10 15:27:09,319 ] 112 root - INFO - Copied 3580 audio files to: artifacts/12_10_2025_15_26_12/data_ingestion/ingested_audio/valid
+[ 2025-12-10 15:27:22,815 ] 112 root - INFO - Copied 3590 audio files to: artifacts/12_10_2025_15_26_12/data_ingestion/ingested_audio/test
+[ 2025-12-10 15:27:22,862 ] 131 root - INFO - Saved metadata: artifacts/12_10_2025_15_26_12/data_ingestion/ingested_metadata/train.csv (3600 rows)
+[ 2025-12-10 15:27:22,961 ] 131 root - INFO - Saved metadata: artifacts/12_10_2025_15_26_12/data_ingestion/ingested_metadata/valid.csv (3580 rows)
+[ 2025-12-10 15:27:22,985 ] 131 root - INFO - Saved metadata: artifacts/12_10_2025_15_26_12/data_ingestion/ingested_metadata/test.csv (3590 rows)
+[ 2025-12-10 15:27:22,985 ] 159 root - INFO - ===== Data Ingestion Completed Successfully =====
+[ 2025-12-10 15:27:22,987 ] 69 root - INFO - === [TrainingPipeline] Data Ingestion: Completed. Artifact: DataIngestionArtifact(train_metadata_path='artifacts/12_10_2025_15_26_12/data_ingestion/ingested_metadata/train.csv', valid_metadata_path='artifacts/12_10_2025_15_26_12/data_ingestion/ingested_metadata/valid.csv', test_metadata_path='artifacts/12_10_2025_15_26_12/data_ingestion/ingested_metadata/test.csv', train_audio_dir='artifacts/12_10_2025_15_26_12/data_ingestion/ingested_audio/train', valid_audio_dir='artifacts/12_10_2025_15_26_12/data_ingestion/ingested_audio/valid', test_audio_dir='artifacts/12_10_2025_15_26_12/data_ingestion/ingested_audio/test') ===
+[ 2025-12-10 15:27:22,987 ] 87 root - INFO - === [TrainingPipeline] Data Validation: Started ===
+[ 2025-12-10 15:27:22,987 ] 323 root - INFO - ===== Data Validation Started =====
+[ 2025-12-10 15:27:23,020 ] 334 root - INFO - Schema/label/dtype validation OK? True
+[ 2025-12-10 15:27:23,021 ] 338 root - INFO - Child-disjoint validation OK? True
+[ 2025-12-10 15:27:34,629 ] 342 root - INFO - Audio validation OK? True
+[ 2025-12-10 15:27:34,785 ] 355 root - INFO - ===== Data Validation Completed =====
+[ 2025-12-10 15:27:34,785 ] 99 root - INFO - === [TrainingPipeline] Data Validation: Completed. Artifact: DataValidationArtifact(validation_status=True, report_file_path='artifacts/12_10_2025_15_26_12/data_validation/validation_report.yaml', drift_report_file_path='artifacts/12_10_2025_15_26_12/data_validation/drift_report/drift_report.yaml', validated_train_metadata_path='artifacts/12_10_2025_15_26_12/data_validation/validated/metadata/train.csv', validated_validation_metadata_path='artifacts/12_10_2025_15_26_12/data_validation/validated/metadata/valid.csv', validated_test_metadata_path='artifacts/12_10_2025_15_26_12/data_validation/validated/metadata/test.csv', invalid_train_metadata_path='artifacts/12_10_2025_15_26_12/data_validation/invalid/metadata/invalid_train_metadata.csv', invalid_validation_metadata_path='artifacts/12_10_2025_15_26_12/data_validation/invalid/metadata/invalid_valid_metadata.csv', invalid_test_metadata_path='artifacts/12_10_2025_15_26_12/data_validation/invalid/metadata/invalid_test_metadata.csv', validated_train_audio_dir='artifacts/12_10_2025_15_26_12/data_ingestion/ingested_audio/train', validated_validation_audio_dir='artifacts/12_10_2025_15_26_12/data_ingestion/ingested_audio/valid', validated_test_audio_dir='artifacts/12_10_2025_15_26_12/data_ingestion/ingested_audio/test') ===
+[ 2025-12-10 15:27:34,786 ] 117 root - INFO - === [TrainingPipeline] Data Transformation: Started ===
+[ 2025-12-10 15:27:34,839 ] 534 root - INFO - ===== Data Transformation Started  =====
+[ 2025-12-10 15:27:34,866 ] 371 root - INFO - Loaded validated metadata: train=3600, valid=3580, test=3590
+[ 2025-12-10 15:27:34,866 ] 544 root - INFO - Extracting base features for TRAIN split...
+[ 2025-12-10 15:27:34,866 ] 444 root - INFO - Extracting eGeMAPS-only base features for split with 3600 files...
+[ 2025-12-10 15:29:16,443 ] 549 root - INFO - Extracting base features for VALIDATION split...
+[ 2025-12-10 15:29:16,443 ] 444 root - INFO - Extracting eGeMAPS-only base features for split with 3580 files...
+[ 2025-12-10 15:30:52,520 ] 554 root - INFO - Extracting base features for TEST split...
+[ 2025-12-10 15:30:52,521 ] 444 root - INFO - Extracting eGeMAPS-only base features for split with 3590 files...
+[ 2025-12-10 15:32:29,783 ] 607 root - INFO - Creating feature directory if needed...
+[ 2025-12-10 15:32:30,184 ] 720 root - INFO - ===== Data Transformation Completed Successfully (eGeMAPS-only) =====
+[ 2025-12-10 15:32:30,185 ] 131 root - INFO - === [TrainingPipeline] Data Transformation: Completed. Artifact: DataTransformationArtifact(train_compare_feature_file_path='artifacts/12_10_2025_15_26_12/data_transformation/features/train_compare_features.npy', valid_compare_feature_file_path='artifacts/12_10_2025_15_26_12/data_transformation/features/valid_compare_features.npy', test_compare_feature_file_path='artifacts/12_10_2025_15_26_12/data_transformation/features/test_compare_features.npy', train_label_file_path='artifacts/12_10_2025_15_26_12/data_transformation/features/train_labels.npy', valid_label_file_path='artifacts/12_10_2025_15_26_12/data_transformation/features/valid_labels.npy', test_label_file_path='artifacts/12_10_2025_15_26_12/data_transformation/features/test_labels.npy') ===
+[ 2025-12-10 15:32:30,185 ] 149 root - INFO - === [TrainingPipeline] Model Training: Started ===
+[ 2025-12-10 15:32:30,186 ] 418 root - INFO - ==== Starting Model Trainer for XGB + eGeMAPS + SMOTE ====
+[ 2025-12-10 15:32:30,187 ] 113 root - INFO - Loading eGeMAPS (compare) features and labels from artifacts...
+[ 2025-12-10 15:32:30,196 ] 137 root - INFO - Shapes - X_train: (3600, 88), X_valid: (3580, 88), X_test: (3590, 88)
+[ 2025-12-10 15:32:30,196 ] 140 root - INFO - Shapes - y_train: (3600,), y_valid: (3580,), y_test: (3590,)
+[ 2025-12-10 15:32:30,196 ] 244 root - INFO - Encoding string labels with LabelEncoder...
+[ 2025-12-10 15:32:30,201 ] 31 root - INFO - Label encoding mapping:
+[ 2025-12-10 15:32:30,201 ] 35 root - INFO - Canonical → 0
+[ 2025-12-10 15:32:30,202 ] 35 root - INFO - Crying → 1
+[ 2025-12-10 15:32:30,202 ] 35 root - INFO - Junk → 2
+[ 2025-12-10 15:32:30,202 ] 35 root - INFO - Laughing → 3
+[ 2025-12-10 15:32:30,203 ] 35 root - INFO - Non-canonical → 4
+[ 2025-12-10 15:32:30,204 ] 254 root - INFO - Fitting SimpleImputer on training data and transforming...
+[ 2025-12-10 15:32:30,228 ] 261 root - INFO - Applying SMOTE on training data...
+[ 2025-12-10 15:32:30,464 ] 266 root - INFO - Resampled train shape: X_train_res=(7185, 88), y_train_res=(7185,)
+[ 2025-12-10 15:32:30,464 ] 274 root - INFO - Training XGBClassifier on resampled training data...
+[ 2025-12-10 15:32:37,114 ] 283 root - INFO - Generating predictions for train/valid/test...
+[ 2025-12-10 15:32:37,152 ] 289 root - INFO - Computing classification metrics (F1, Precision, Recall, UAR)...
+[ 2025-12-10 15:32:37,181 ] 299 root - INFO - Train metrics: F1=0.7796, Precision=0.7909, Recall=0.7764, UAR=0.8158
+[ 2025-12-10 15:32:37,181 ] 305 root - INFO - Valid metrics: F1=0.6076, Precision=0.6399, Recall=0.5925, UAR=0.4667
+[ 2025-12-10 15:32:37,181 ] 311 root - INFO - Test  metrics: F1=0.5938, Precision=0.6139, Recall=0.5816, UAR=0.4629
+[ 2025-12-10 15:32:37,181 ] 319 root - INFO - Saving preprocessing object (imputer) to artifacts/12_10_2025_15_26_12/model_trainer/preprocessing/preprocessing.pkl
+[ 2025-12-10 15:32:37,185 ] 328 root - INFO - Saving LabelEncoder to artifacts/12_10_2025_15_26_12/model_trainer/preprocessing/label_encoder.pkl
+[ 2025-12-10 15:32:37,187 ] 335 root - INFO - Saving trained XGB model to artifacts/12_10_2025_15_26_12/model_trainer/trained_model/xgb_egemaps_smote_optuna.pkl
+[ 2025-12-10 15:32:37,412 ] 348 root - INFO - Saving confusion matrices for train/valid/test...
+[ 2025-12-10 15:33:12,036 ] 402 root - INFO - ModelTrainerArtifact: ModelTrainerArtifact(trained_model_file_path='artifacts/12_10_2025_15_26_12/model_trainer/trained_model/xgb_egemaps_smote_optuna.pkl', preprocessing_object_file_path='artifacts/12_10_2025_15_26_12/model_trainer/preprocessing/preprocessing.pkl', label_encoder_file_path='artifacts/12_10_2025_15_26_12/model_trainer/preprocessing/label_encoder.pkl', train_metric_artifact=ClassificationMetricArtifact(f1_score=0.7796433177114547, precision_score=0.790944558611149, recall_score=0.7763888888888889, uar=0.8157837195126032), valid_metric_artifact=ClassificationMetricArtifact(f1_score=0.6076207961595036, precision_score=0.6399212547151218, recall_score=0.5924581005586592, uar=0.4667488981091169), test_metric_artifact=ClassificationMetricArtifact(f1_score=0.5938183153226734, precision_score=0.6139462363389586, recall_score=0.5816155988857938, uar=0.46289987029828944), train_confusion_matrix_path='artifacts/12_10_2025_15_26_12/model_trainer/confusion_matrices/train_cm.png', valid_confusion_matrix_path='artifacts/12_10_2025_15_26_12/model_trainer/confusion_matrices/valid_cm.png', test_confusion_matrix_path='artifacts/12_10_2025_15_26_12/model_trainer/confusion_matrices/test_cm.png')
+[ 2025-12-10 15:33:12,041 ] 420 root - INFO - ==== Model Trainer completed successfully ====
+[ 2025-12-10 15:33:12,041 ] 161 root - INFO - === [TrainingPipeline] Model Training: Completed. Artifact: ModelTrainerArtifact(trained_model_file_path='artifacts/12_10_2025_15_26_12/model_trainer/trained_model/xgb_egemaps_smote_optuna.pkl', preprocessing_object_file_path='artifacts/12_10_2025_15_26_12/model_trainer/preprocessing/preprocessing.pkl', label_encoder_file_path='artifacts/12_10_2025_15_26_12/model_trainer/preprocessing/label_encoder.pkl', train_metric_artifact=ClassificationMetricArtifact(f1_score=0.7796433177114547, precision_score=0.790944558611149, recall_score=0.7763888888888889, uar=0.8157837195126032), valid_metric_artifact=ClassificationMetricArtifact(f1_score=0.6076207961595036, precision_score=0.6399212547151218, recall_score=0.5924581005586592, uar=0.4667488981091169), test_metric_artifact=ClassificationMetricArtifact(f1_score=0.5938183153226734, precision_score=0.6139462363389586, recall_score=0.5816155988857938, uar=0.46289987029828944), train_confusion_matrix_path='artifacts/12_10_2025_15_26_12/model_trainer/confusion_matrices/train_cm.png', valid_confusion_matrix_path='artifacts/12_10_2025_15_26_12/model_trainer/confusion_matrices/valid_cm.png', test_confusion_matrix_path='artifacts/12_10_2025_15_26_12/model_trainer/confusion_matrices/test_cm.png') ===
+[ 2025-12-10 15:33:12,118 ] 232 root - INFO - Copied final model artifacts to `final_model`:
+  - model: final_model/xgb_egemaps_smote_optuna.pkl
+  - preprocessing: final_model/preprocessing.pkl
+  - label_encoder: final_model/label_encoder.pkl
+[ 2025-12-10 15:33:12,123 ] 284 root - INFO - Written model_info.yaml at: final_model/model_info.yaml
+[ 2025-12-10 15:33:12,124 ] 286 root - INFO - Syncing artifact_dir to S3...
+[ 2025-12-10 15:33:16,379 ] 289 root - INFO - Syncing final_model dir to S3...
+[ 2025-12-10 15:33:19,858 ] 292 root - INFO - === VisionInfantNet: Full Training Pipeline Finished Successfully ===
+[ 2025-12-10 15:33:19,858 ] 148 root - INFO - TrainingPipeline finished successfully.
