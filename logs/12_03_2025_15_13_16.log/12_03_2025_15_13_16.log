@@ -1,6 +1,0 @@
-[ 2025-12-03 15:13:17,599 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/user "HTTP/1.1 200 OK"
-[ 2025-12-03 15:13:17,606 ] 107 dagshub - INFO - Accessing as arunps12
-[ 2025-12-03 15:13:18,019 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/repos/arunps12/VisionInfantNet "HTTP/1.1 200 OK"
-[ 2025-12-03 15:13:18,409 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/user "HTTP/1.1 200 OK"
-[ 2025-12-03 15:13:18,411 ] 107 dagshub - INFO - Initialized MLflow to track repo "arunps12/VisionInfantNet"
-[ 2025-12-03 15:13:18,412 ] 107 dagshub - INFO - Repository arunps12/VisionInfantNet initialized!
