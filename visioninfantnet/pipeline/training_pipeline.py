@@ -27,7 +27,8 @@ import os
 import shutil
 
 from visioninfantnet.utils.main_utils.utils import write_yaml_file
-
+from visioninfantnet.constant.training_pipeline import TRAINING_BUCKET_NAME
+from visioninfantnet.cloud.s3_syncer import S3Sync
 class TrainingPipeline:
     """
     Orchestrates the full VisionInfantNet pipeline:
@@ -45,6 +46,7 @@ class TrainingPipeline:
     def __init__(self):
         try:
             self.training_pipeline_config = TrainingPipelineConfig()
+            self.s3_sync = S3Sync()
         except Exception as e:
             raise VisionInfantNetException(e, sys)
 
@@ -165,6 +167,24 @@ class TrainingPipeline:
         except Exception as e:
             logging.exception("Error in start_model_trainer")
             raise VisionInfantNetException(e, sys)
+        
+
+    ## local artifact is going to s3 bucket    
+    def sync_artifact_dir_to_s3(self):
+        try:
+            aws_bucket_url = f"s3://{TRAINING_BUCKET_NAME}/artifact/{self.training_pipeline_config.timestamp}"
+            self.s3_sync.sync_folder_to_s3(folder = self.training_pipeline_config.artifact_dir,aws_bucket_url=aws_bucket_url)
+        except Exception as e:
+            raise VisionInfantNetException(e,sys)
+        
+    ## local final model is going to s3 bucket 
+        
+    def sync_saved_model_dir_to_s3(self):
+        try:
+            aws_bucket_url = f"s3://{TRAINING_BUCKET_NAME}/final_model/{self.training_pipeline_config.timestamp}"
+            self.s3_sync.sync_folder_to_s3(folder = self.training_pipeline_config.model_dir,aws_bucket_url=aws_bucket_url)
+        except Exception as e:
+            raise VisionInfantNetException(e,sys)
 
     # ------------------------------------------------------------------
     # RUN FULL PIPELINE
@@ -257,11 +277,18 @@ class TrainingPipeline:
                     },
                 },
             }
-
+            
             model_info_path = os.path.join(final_model_dir, "model_info.yaml")
             write_yaml_file(file_path=model_info_path, content=model_info, replace=True)
 
             logging.info(f"Written model_info.yaml at: {model_info_path}")
+
+            logging.info("Syncing artifact_dir to S3...")
+            self.sync_artifact_dir_to_s3()
+
+            logging.info("Syncing final_model dir to S3...")
+            self.sync_saved_model_dir_to_s3()
+            
             logging.info(
                 "=== VisionInfantNet: Full Training Pipeline Finished Successfully ==="
             )

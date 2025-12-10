@@ -40,3 +40,32 @@
 [ 2025-12-10 11:53:53,588 ] 181 root - INFO - Decoding predictions with LabelEncoder...
 [ 2025-12-10 11:53:53,589 ] 184 root - INFO - Prediction completed successfully.
 [ 2025-12-10 11:53:53,589 ] 209 root - INFO - Prediction completed for all uploaded files.
+[ 2025-12-10 15:23:46,136 ] 145 root - INFO - === /train endpoint called: starting TrainingPipeline ===
+[ 2025-12-10 15:23:46,136 ] 178 root - INFO - === VisionInfantNet: Full Training Pipeline Started ===
+[ 2025-12-10 15:23:46,136 ] 56 root - INFO - === [TrainingPipeline] Data Ingestion: Started ===
+[ 2025-12-10 15:23:46,137 ] 141 root - INFO - ===== Data Ingestion Started =====
+[ 2025-12-10 15:23:46,249 ] 41 root - INFO - Loaded metadata (13478 rows) and saved snapshot to: artifacts/12_10_2025_11_52_25/data_ingestion/full_metadata.csv
+[ 2025-12-10 15:23:46,249 ] 55 root - INFO - Starting child-disjoint splitting...
+[ 2025-12-10 15:23:46,260 ] 87 root - INFO - train split created with 3600 samples.
+[ 2025-12-10 15:23:46,268 ] 87 root - INFO - valid split created with 3580 samples.
+[ 2025-12-10 15:23:46,276 ] 87 root - INFO - test split created with 3590 samples.
+[ 2025-12-10 15:24:01,768 ] 112 root - INFO - Copied 3600 audio files to: artifacts/12_10_2025_11_52_25/data_ingestion/ingested_audio/train
+[ 2025-12-10 15:24:16,196 ] 112 root - INFO - Copied 3580 audio files to: artifacts/12_10_2025_11_52_25/data_ingestion/ingested_audio/valid
+[ 2025-12-10 15:24:30,702 ] 112 root - INFO - Copied 3590 audio files to: artifacts/12_10_2025_11_52_25/data_ingestion/ingested_audio/test
+[ 2025-12-10 15:24:30,752 ] 131 root - INFO - Saved metadata: artifacts/12_10_2025_11_52_25/data_ingestion/ingested_metadata/train.csv (3600 rows)
+[ 2025-12-10 15:24:30,819 ] 131 root - INFO - Saved metadata: artifacts/12_10_2025_11_52_25/data_ingestion/ingested_metadata/valid.csv (3580 rows)
+[ 2025-12-10 15:24:30,898 ] 131 root - INFO - Saved metadata: artifacts/12_10_2025_11_52_25/data_ingestion/ingested_metadata/test.csv (3590 rows)
+[ 2025-12-10 15:24:30,898 ] 159 root - INFO - ===== Data Ingestion Completed Successfully =====
+[ 2025-12-10 15:24:30,900 ] 67 root - INFO - === [TrainingPipeline] Data Ingestion: Completed. Artifact: DataIngestionArtifact(train_metadata_path='artifacts/12_10_2025_11_52_25/data_ingestion/ingested_metadata/train.csv', valid_metadata_path='artifacts/12_10_2025_11_52_25/data_ingestion/ingested_metadata/valid.csv', test_metadata_path='artifacts/12_10_2025_11_52_25/data_ingestion/ingested_metadata/test.csv', train_audio_dir='artifacts/12_10_2025_11_52_25/data_ingestion/ingested_audio/train', valid_audio_dir='artifacts/12_10_2025_11_52_25/data_ingestion/ingested_audio/valid', test_audio_dir='artifacts/12_10_2025_11_52_25/data_ingestion/ingested_audio/test') ===
+[ 2025-12-10 15:24:30,900 ] 85 root - INFO - === [TrainingPipeline] Data Validation: Started ===
+[ 2025-12-10 15:24:30,900 ] 323 root - INFO - ===== Data Validation Started =====
+[ 2025-12-10 15:24:30,932 ] 334 root - INFO - Schema/label/dtype validation OK? True
+[ 2025-12-10 15:24:30,933 ] 338 root - INFO - Child-disjoint validation OK? True
+[ 2025-12-10 15:24:44,110 ] 342 root - INFO - Audio validation OK? True
+[ 2025-12-10 15:24:44,289 ] 355 root - INFO - ===== Data Validation Completed =====
+[ 2025-12-10 15:24:44,290 ] 97 root - INFO - === [TrainingPipeline] Data Validation: Completed. Artifact: DataValidationArtifact(validation_status=True, report_file_path='artifacts/12_10_2025_11_52_25/data_validation/validation_report.yaml', drift_report_file_path='artifacts/12_10_2025_11_52_25/data_validation/drift_report/drift_report.yaml', validated_train_metadata_path='artifacts/12_10_2025_11_52_25/data_validation/validated/metadata/train.csv', validated_validation_metadata_path='artifacts/12_10_2025_11_52_25/data_validation/validated/metadata/valid.csv', validated_test_metadata_path='artifacts/12_10_2025_11_52_25/data_validation/validated/metadata/test.csv', invalid_train_metadata_path='artifacts/12_10_2025_11_52_25/data_validation/invalid/metadata/invalid_train_metadata.csv', invalid_validation_metadata_path='artifacts/12_10_2025_11_52_25/data_validation/invalid/metadata/invalid_valid_metadata.csv', invalid_test_metadata_path='artifacts/12_10_2025_11_52_25/data_validation/invalid/metadata/invalid_test_metadata.csv', validated_train_audio_dir='artifacts/12_10_2025_11_52_25/data_ingestion/ingested_audio/train', validated_validation_audio_dir='artifacts/12_10_2025_11_52_25/data_ingestion/ingested_audio/valid', validated_test_audio_dir='artifacts/12_10_2025_11_52_25/data_ingestion/ingested_audio/test') ===
+[ 2025-12-10 15:24:44,290 ] 115 root - INFO - === [TrainingPipeline] Data Transformation: Started ===
+[ 2025-12-10 15:24:44,291 ] 534 root - INFO - ===== Data Transformation Started  =====
+[ 2025-12-10 15:24:44,318 ] 371 root - INFO - Loaded validated metadata: train=3600, valid=3580, test=3590
+[ 2025-12-10 15:24:44,318 ] 544 root - INFO - Extracting base features for TRAIN split...
+[ 2025-12-10 15:24:44,318 ] 444 root - INFO - Extracting eGeMAPS-only base features for split with 3600 files...
