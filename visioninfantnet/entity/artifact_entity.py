@@ -25,65 +25,72 @@ class DataValidationArtifact:
     validated_test_audio_dir: str
 
 
+from dataclasses import dataclass
+
 @dataclass
 class DataTransformationArtifact:
 
-    # ======================= IMAGE FEATURE ARRAYS ============================
-    train_image_feature_file_path: str
-    valid_image_feature_file_path: str
-    test_image_feature_file_path: str
-
-    # ======================= MEL-SPECTROGRAM ARRAYS =========================
-    train_spectrogram_feature_file_path: str
-    valid_spectrogram_feature_file_path: str
-    test_spectrogram_feature_file_path: str
-
     # ======================= CLASSICAL FEATURES =============================
-    # ComParE
+    # ComParE (eGeMAPS)
     train_compare_feature_file_path: str
     valid_compare_feature_file_path: str
     test_compare_feature_file_path: str
 
-    # BoAW
-    train_boaw_feature_file_path: str
-    valid_boaw_feature_file_path: str
-    test_boaw_feature_file_path: str
-
-    # AUDEEP 
-    train_audeep_feature_file_path: str
-    valid_audeep_feature_file_path: str
-    test_audeep_feature_file_path: str
-
-    # Fisher Vectors
-    train_fv_feature_file_path: str
-    valid_fv_feature_file_path: str
-    test_fv_feature_file_path: str
-
-    # ======================= DEEP AUDIO EMBEDDINGS ==========================
-    # PANNs embeddings
-    train_panns_feature_file_path: str
-    valid_panns_feature_file_path: str
-    test_panns_feature_file_path: str
-
-    # YAMNet embeddings
-    train_yamnet_feature_file_path: str
-    valid_yamnet_feature_file_path: str
-    test_yamnet_feature_file_path: str
-
-    # ======================= IMAGE EMBEDDINGS ================================
-    train_image_embedding_file_path: str
-    valid_image_embedding_file_path: str
-    test_image_embedding_file_path: str
-
-    # ======================= LABEL FILES ====================================
+    # ======================= LABEL FILES  ======================================
     train_label_file_path: str
     valid_label_file_path: str
     test_label_file_path: str
 
-    # ======================= PNG SPECTROGRAM DIRECTORIES ====================
-    train_spectrogram_image_dir: str
-    valid_spectrogram_image_dir: str
-    test_spectrogram_image_dir: str
+    # ==============================================================================================
+    # BELOW: 
+    # ==============================================================================================
+
+    # ======================= IMAGE FEATURE ARRAYS  =====================================
+    # train_image_feature_file_path: str
+    # valid_image_feature_file_path: str
+    # test_image_feature_file_path: str
+
+    # ======================= MEL-SPECTROGRAM ARRAYS  ==================================
+    # train_spectrogram_feature_file_path: str
+    # valid_spectrogram_feature_file_path: str
+    # test_spectrogram_feature_file_path: str
+
+    # ======================= OTHER CLASSICAL FEATURES  ================================
+    # BoAW
+    # train_boaw_feature_file_path: str
+    # valid_boaw_feature_file_path: str
+    # test_boaw_feature_file_path: str
+
+    # AUDEEP 
+    # train_audeep_feature_file_path: str
+    # valid_audeep_feature_file_path: str
+    # test_audeep_feature_file_path: str
+
+    # Fisher Vectors
+    # train_fv_feature_file_path: str
+    # valid_fv_feature_file_path: str
+    # test_fv_feature_file_path: str
+
+    # ======================= DEEP AUDIO EMBEDDINGS  ==================================
+    # PANNs
+    # train_panns_feature_file_path: str
+    # valid_panns_feature_file_path: str
+    # test_panns_feature_file_path: str
+
+    # YAMNet
+    # train_yamnet_feature_file_path: str
+    # valid_yamnet_feature_file_path: str
+    # test_yamnet_feature_file_path: str
+
+    # ======================= IMAGE EMBEDDINGS  =======================================
+    # train_image_embedding_file_path: str
+    # valid_image_embedding_file_path: str
+    # test_image_embedding_file_path: str
+
+    # ======================= PNG SPECTROGRAM DIRECTORIES  ============================
+    # train_spectrogram_image_dir: str
+    # valid_spectrogram_image_dir: str
+    # test_spectrogram_image_dir: str
 
 
 

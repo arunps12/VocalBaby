@@ -214,7 +214,9 @@ class ModelTrainer:
             mlflow.log_artifact(self.model_trainer_config.train_confusion_matrix_path)
             mlflow.log_artifact(self.model_trainer_config.valid_confusion_matrix_path)
             mlflow.log_artifact(self.model_trainer_config.test_confusion_matrix_path)
-
+            # ---- Log preprocessing + label encoder objects ----
+            mlflow.log_artifact(self.model_trainer_config.preprocessing_object_file_path)
+            mlflow.log_artifact(self.model_trainer_config.label_encoder_file_path)
             # ---- Log model ----
             mlflow.sklearn.log_model(model, "model")
 

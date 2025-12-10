@@ -23,6 +23,10 @@ from visioninfantnet.entity.artifact_entity import (
     ModelTrainerArtifact,
 )
 
+import os
+import shutil
+
+from visioninfantnet.utils.main_utils.utils import write_yaml_file
 
 class TrainingPipeline:
     """
@@ -183,7 +187,81 @@ class TrainingPipeline:
             model_trainer_artifact = self.start_model_trainer(
                 data_transformation_artifact=data_transformation_artifact
             )
+            # Copy final model to final_model_dir
+            final_model_dir = self.training_pipeline_config.model_dir
+            os.makedirs(final_model_dir, exist_ok=True)
+            # -----------------------------------------------------------
+            # 5) COPY model, preprocessor, label_encoder to final_model/
+            # -----------------------------------------------------------
+            
+            src_model_path = model_trainer_artifact.trained_model_file_path
+            src_preproc_path = model_trainer_artifact.preprocessing_object_file_path
+            src_label_encoder_path = model_trainer_artifact.label_encoder_file_path
 
+            dst_model_path = os.path.join(final_model_dir, os.path.basename(src_model_path))
+            dst_preproc_path = os.path.join(final_model_dir, os.path.basename(src_preproc_path))
+            dst_label_encoder_path = os.path.join(
+                final_model_dir, os.path.basename(src_label_encoder_path)
+            )
+
+            # Copy files
+            shutil.copy2(src_model_path, dst_model_path)
+            shutil.copy2(src_preproc_path, dst_preproc_path)
+            shutil.copy2(src_label_encoder_path, dst_label_encoder_path)
+
+            logging.info(
+                f"Copied final model artifacts to `{final_model_dir}`:\n"
+                f"  - model: {dst_model_path}\n"
+                f"  - preprocessing: {dst_preproc_path}\n"
+                f"  - label_encoder: {dst_label_encoder_path}"
+            )
+
+            # ============================================================
+            # 6) WRITE model_info.yaml in final_model/
+            # ============================================================
+            model_info = {
+                "pipeline": {
+                    "name": self.training_pipeline_config.pipeline_name,
+                    "timestamp": self.training_pipeline_config.timestamp,
+                    "artifact_dir": self.training_pipeline_config.artifact_dir,
+                },
+                "artifacts": {
+                    "trained_model_file_path": src_model_path,
+                    "preprocessing_object_file_path": src_preproc_path,
+                    "label_encoder_file_path": src_label_encoder_path,
+                },
+                "final_model": {
+                    "model_dir": final_model_dir,
+                    "model_file": os.path.basename(dst_model_path),
+                    "preprocessing_file": os.path.basename(dst_preproc_path),
+                    "label_encoder_file": os.path.basename(dst_label_encoder_path),
+                },
+                "metrics": {
+                    "train": {
+                        "f1": model_trainer_artifact.train_metric_artifact.f1_score,
+                        "precision": model_trainer_artifact.train_metric_artifact.precision_score,
+                        "recall": model_trainer_artifact.train_metric_artifact.recall_score,
+                        "uar": model_trainer_artifact.train_metric_artifact.uar,
+                    },
+                    "valid": {
+                        "f1": model_trainer_artifact.valid_metric_artifact.f1_score,
+                        "precision": model_trainer_artifact.valid_metric_artifact.precision_score,
+                        "recall": model_trainer_artifact.valid_metric_artifact.recall_score,
+                        "uar": model_trainer_artifact.valid_metric_artifact.uar,
+                    },
+                    "test": {
+                        "f1": model_trainer_artifact.test_metric_artifact.f1_score,
+                        "precision": model_trainer_artifact.test_metric_artifact.precision_score,
+                        "recall": model_trainer_artifact.test_metric_artifact.recall_score,
+                        "uar": model_trainer_artifact.test_metric_artifact.uar,
+                    },
+                },
+            }
+
+            model_info_path = os.path.join(final_model_dir, "model_info.yaml")
+            write_yaml_file(file_path=model_info_path, content=model_info, replace=True)
+
+            logging.info(f"Written model_info.yaml at: {model_info_path}")
             logging.info(
                 "=== VisionInfantNet: Full Training Pipeline Finished Successfully ==="
             )
@@ -192,3 +270,20 @@ class TrainingPipeline:
         except Exception as e:
             logging.exception("Error in run_pipeline")
             raise VisionInfantNetException(e, sys)
+
+if __name__ == "__main__":
+    try:
+        logging.info("=== VisionInfantNet: Full Training Pipeline Started (training_pipeline.py) ===")
+
+        pipeline = TrainingPipeline()
+        model_trainer_artifact = pipeline.run_pipeline()
+
+        logging.info(f"ModelTrainerArtifact from pipeline: {model_trainer_artifact}")
+        print("\nModel Trainer Artifact:")
+        print(model_trainer_artifact)
+
+        logging.info("=== VisionInfantNet: Full Training Pipeline Finished Successfully ===")
+
+    except Exception as e:
+        logging.exception("Error occurred in VisionInfantNet training pipeline.")
+        raise VisionInfantNetException(e, sys)

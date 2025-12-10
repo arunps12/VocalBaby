@@ -105,78 +105,83 @@ DATA_TRANSFORMATION_DIR_NAME: str = "data_transformation"
 # All .npy feature files live under this directory
 DATA_TRANSFORMATION_FEATURE_DIR: str = "features"
 
-# ---- 1) IMAGE FEATURES (224x224x3 tensors for CNNs) ----
-DATA_TRANSFORMATION_TRAIN_IMAGE_FEATURE_FILE: str = "train_image_features.npy"
-DATA_TRANSFORMATION_VALID_IMAGE_FEATURE_FILE: str = "valid_image_features.npy"
-DATA_TRANSFORMATION_TEST_IMAGE_FEATURE_FILE: str = "test_image_features.npy"
+# ============================================================
+# 1) IMAGE FEATURES 
+# ============================================================
+# DATA_TRANSFORMATION_TRAIN_IMAGE_FEATURE_FILE: str = "train_image_features.npy"
+# DATA_TRANSFORMATION_VALID_IMAGE_FEATURE_FILE: str = "valid_image_features.npy"
+# DATA_TRANSFORMATION_TEST_IMAGE_FEATURE_FILE: str = "test_image_features.npy"
 
-# ---- 2) AUDIO MEL-SPECTROGRAM FEATURES (n_mels x T, audio-domain) ----
-DATA_TRANSFORMATION_TRAIN_SPECTROGRAM_FEATURE_FILE: str = "train_melspectrogram_features.npy"
-DATA_TRANSFORMATION_VALID_SPECTROGRAM_FEATURE_FILE: str = "valid_melspectrogram_features.npy"
-DATA_TRANSFORMATION_TEST_SPECTROGRAM_FEATURE_FILE: str = "test_melspectrogram_features.npy"
+# ============================================================
+# 2) MEL-SPECTROGRAM FEATURES 
+# ============================================================
+# DATA_TRANSFORMATION_TRAIN_SPECTROGRAM_FEATURE_FILE: str = "train_melspectrogram_features.npy"
+# DATA_TRANSFORMATION_VALID_SPECTROGRAM_FEATURE_FILE: str = "valid_melspectrogram_features.npy"
+# DATA_TRANSFORMATION_TEST_SPECTROGRAM_FEATURE_FILE: str = "test_melspectrogram_features.npy"
 
-# ---- 3) CLASSICAL / GLOBAL AUDIO FEATURES (one vector per file) ----
-# 3.1 ComParE functionals (openSMILE)
+# ============================================================
+# 3) CLASSICAL / GLOBAL AUDIO FEATURES
+# ============================================================
+
+# ---- 3.1 ComParE / eGeMAPS ----
 DATA_TRANSFORMATION_TRAIN_COMPARE_FEATURE_FILE: str = "train_compare_features.npy"
 DATA_TRANSFORMATION_VALID_COMPARE_FEATURE_FILE: str = "valid_compare_features.npy"
 DATA_TRANSFORMATION_TEST_COMPARE_FEATURE_FILE: str = "test_compare_features.npy"
 
-# 3.2 Bag-of-Audio-Words (openXBOW)
-DATA_TRANSFORMATION_TRAIN_BOAW_FEATURE_FILE: str = "train_boaw_features.npy"
-DATA_TRANSFORMATION_VALID_BOAW_FEATURE_FILE: str = "valid_boaw_features.npy"
-DATA_TRANSFORMATION_TEST_BOAW_FEATURE_FILE: str = "test_boaw_features.npy"
+# ---- 3.2 Bag-of-Audio-Words  ----
+# DATA_TRANSFORMATION_TRAIN_BOAW_FEATURE_FILE: str = "train_boaw_features.npy"
+# DATA_TRANSFORMATION_VALID_BOAW_FEATURE_FILE: str = "valid_boaw_features.npy"
+# DATA_TRANSFORMATION_TEST_BOAW_FEATURE_FILE: str = "test_boaw_features.npy"
 
-# 3.3 AUDEEP sequence-to-sequence embeddings
-DATA_TRANSFORMATION_TRAIN_AUDEEP_FEATURE_FILE: str = "train_audeep_features.npy"
-DATA_TRANSFORMATION_VALID_AUDEEP_FEATURE_FILE: str = "valid_audeep_features.npy"
-DATA_TRANSFORMATION_TEST_AUDEEP_FEATURE_FILE: str = "test_audeep_features.npy"
+# ---- 3.3 AUDEEP embeddings  ----
+# DATA_TRANSFORMATION_TRAIN_AUDEEP_FEATURE_FILE: str = "train_audeep_features.npy"
+# DATA_TRANSFORMATION_VALID_AUDEEP_FEATURE_FILE: str = "valid_audeep_features.npy"
+# DATA_TRANSFORMATION_TEST_AUDEEP_FEATURE_FILE: str = "test_audeep_features.npy"
 
-# 3.4 Fisher Vector embeddings (MFCC + GMM)
-DATA_TRANSFORMATION_TRAIN_FV_FEATURE_FILE: str = "train_fv_features.npy"
-DATA_TRANSFORMATION_VALID_FV_FEATURE_FILE: str = "valid_fv_features.npy"
-DATA_TRANSFORMATION_TEST_FV_FEATURE_FILE: str = "test_fv_features.npy"
+# ---- 3.4 Fisher Vectors  ----
+# DATA_TRANSFORMATION_TRAIN_FV_FEATURE_FILE: str = "train_fv_features.npy"
+# DATA_TRANSFORMATION_VALID_FV_FEATURE_FILE: str = "valid_fv_features.npy"
+# DATA_TRANSFORMATION_TEST_FV_FEATURE_FILE: str = "test_fv_features.npy"
 
-# =============================================================================
-# 4) DEEP AUDIO EMBEDDINGS (PANNs, YAMNet)
-# =============================================================================
+# ============================================================
+# 4) DEEP AUDIO EMBEDDINGS 
+# ============================================================
 
-# --- PANNs embeddings ---
-DATA_TRANSFORMATION_TRAIN_PANNS_FEATURE_FILE = "train_panns_features.npy"
-DATA_TRANSFORMATION_VALID_PANNS_FEATURE_FILE = "valid_panns_features.npy"
-DATA_TRANSFORMATION_TEST_PANNS_FEATURE_FILE = "test_panns_features.npy"
+# PANNs embeddings
+# DATA_TRANSFORMATION_TRAIN_PANNS_FEATURE_FILE = "train_panns_features.npy"
+# DATA_TRANSFORMATION_VALID_PANNS_FEATURE_FILE = "valid_panns_features.npy"
+# DATA_TRANSFORMATION_TEST_PANNS_FEATURE_FILE = "test_panns_features.npy"
 
-# --- YAMNet embeddings ---
-DATA_TRANSFORMATION_TRAIN_YAMNET_FEATURE_FILE = "train_yamnet_features.npy"
-DATA_TRANSFORMATION_VALID_YAMNET_FEATURE_FILE = "valid_yamnet_features.npy"
-DATA_TRANSFORMATION_TEST_YAMNET_FEATURE_FILE = "test_yamnet_features.npy"
+# YAMNet embeddings
+# DATA_TRANSFORMATION_TRAIN_YAMNET_FEATURE_FILE = "train_yamnet_features.npy"
+# DATA_TRANSFORMATION_VALID_YAMNET_FEATURE_FILE = "valid_yamnet_features.npy"
+# DATA_TRANSFORMATION_TEST_YAMNET_FEATURE_FILE = "test_yamnet_features.npy"
 
-# =============================================================================
-# 5) IMAGE EMBEDDINGS (CNN backbone features e.g. ResNet50)
-# =============================================================================
+# ============================================================
+# 5) IMAGE EMBEDDINGS 
+# ============================================================
+# DATA_TRANSFORMATION_TRAIN_IMAGE_EMB_FEATURE_FILE = "train_image_embeddings.npy"
+# DATA_TRANSFORMATION_VALID_IMAGE_EMB_FEATURE_FILE = "valid_image_embeddings.npy"
+# DATA_TRANSFORMATION_TEST_IMAGE_EMB_FEATURE_FILE = "test_image_embeddings.npy"
 
-DATA_TRANSFORMATION_TRAIN_IMAGE_EMB_FEATURE_FILE = "train_image_embeddings.npy"
-DATA_TRANSFORMATION_VALID_IMAGE_EMB_FEATURE_FILE = "valid_image_embeddings.npy"
-DATA_TRANSFORMATION_TEST_IMAGE_EMB_FEATURE_FILE = "test_image_embeddings.npy"
-
-# ---- 6) LABELS  ----
+# ============================================================
+# 6) LABELS 
+# ============================================================
 DATA_TRANSFORMATION_TRAIN_LABEL_FILE: str = "train_labels.npy"
 DATA_TRANSFORMATION_VALID_LABEL_FILE: str = "valid_labels.npy"
 DATA_TRANSFORMATION_TEST_LABEL_FILE: str = "test_labels.npy"
 
-# =============================================================================
-# Spectrogram PNG image directories (for visual inspection / torchvision datasets)
-# =============================================================================
+# ============================================================
+# Spectrogram PNG Directories 
+# ============================================================
+#DATA_TRANSFORMATION_SPECTROGRAM_IMAGE_DIR: str = "spectrogram_images"
+#DATA_TRANSFORMATION_TRAIN_SPECTROGRAM_IMAGE_SUBDIR: str = "train"
+#DATA_TRANSFORMATION_VALID_SPECTROGRAM_IMAGE_SUBDIR: str = "valid"
+#DATA_TRANSFORMATION_TEST_SPECTROGRAM_IMAGE_SUBDIR: str = "test"
 
-DATA_TRANSFORMATION_SPECTROGRAM_IMAGE_DIR: str = "spectrogram_images"  # root folder
-
-DATA_TRANSFORMATION_TRAIN_SPECTROGRAM_IMAGE_SUBDIR: str = "train"
-DATA_TRANSFORMATION_VALID_SPECTROGRAM_IMAGE_SUBDIR: str = "valid"
-DATA_TRANSFORMATION_TEST_SPECTROGRAM_IMAGE_SUBDIR: str = "test"
-
-# =============================================================================
-# Audio / spectrogram hyperparameters
-# =============================================================================
-
+# ============================================================
+# Audio parameters (still required)
+# ============================================================
 TARGET_SAMPLE_RATE: int = 16000
 N_FFT: int = 512
 HOP_LENGTH: int = 160
