@@ -13,9 +13,6 @@ permissions:
 
 jobs:
 
-  # ------------------------------
-  # 1) Continuous Integration
-  # ------------------------------
   integration:
     name: Continuous Integration
     runs-on: ubuntu-latest
@@ -30,10 +27,6 @@ jobs:
       - name: Run unit tests
         run: echo "Running unit tests"
 
-
-  # ------------------------------
-  # 2) Build + Push Docker Image to Amazon ECR
-  # ------------------------------
   build-and-push-ecr-image:
     name: Continuous Delivery
     needs: integration
@@ -48,9 +41,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq unzip
 
-      # ------------------------------
-      # Configure AWS credentials
-      # ------------------------------
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -58,20 +48,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # ------------------------------
-      # Login to ECR
-      # ------------------------------
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      # ------------------------------
-      # Build + Push Docker Image
-      # ------------------------------
       - name: Build and push Docker image to Amazon ECR
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          # FIXED TAG --> ensures one tag only
           tags: "${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest"
