@@ -1,13 +1,13 @@
 import os
 import sys
 import shutil
-from typing import List
-import zipfile
 import tempfile
+import zipfile
+from typing import List, Optional
 
+import yaml
 from fastapi import FastAPI, File, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
 from starlette.responses import RedirectResponse
 from uvicorn import run as app_run
 
@@ -36,42 +36,90 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ----------------------------------------------------------------------
+# Globals: final_model + cached predictor
+# ----------------------------------------------------------------------
+FINAL_MODEL_DIR = "final_model"
+MODEL_INFO_PATH = os.path.join(FINAL_MODEL_DIR, "model_info.yaml")
 
-# ----------------------------------------------------------------------
-# find latest model_trainer directory under artifacts/
-# ----------------------------------------------------------------------
-def _get_latest_model_trainer_dir(artifacts_root: str = "artifacts") -> str:
+_predictor: Optional[PredictionPipeline] = None
+
+
+def _get_final_model_dir_from_model_info() -> str:
     """
-    Finds the latest timestamped run inside `artifacts/` and returns its
-    model_trainer directory.
+    Use the `final_model` section in model_info.yaml to get the directory
+    where the 3 .pkl files are stored.
+
+    model_info.yaml example:
+
+    final_model:
+      model_dir: final_model
+      model_file: xgb_egemaps_smote_optuna.pkl
+      preprocessing_file: preprocessing.pkl
+      label_encoder_file: label_encoder.pkl
+
+    Only need `model_dir` here, and PredictionPipeline expects:
+      model_trainer_dir/xgb_egemaps_smote_optuna.pkl
+      model_trainer_dir/preprocessing.pkl
+      model_trainer_dir/label_encoder.pkl
     """
     try:
-        if not os.path.isdir(artifacts_root):
-            raise FileNotFoundError(f"Artifacts root not found: {artifacts_root}")
-
-        # List timestamped subdirectories
-        subdirs = [
-            d for d in os.listdir(artifacts_root)
-            if os.path.isdir(os.path.join(artifacts_root, d))
-        ]
-        if not subdirs:
-            raise FileNotFoundError("No timestamped artifact directories found.")
-
-        # Sort lexicographically and pick the latest
-        subdirs.sort()
-        latest_run = subdirs[-1]
-
-        model_trainer_dir = os.path.join(artifacts_root, latest_run, "model_trainer")
-        if not os.path.isdir(model_trainer_dir):
+        if not os.path.exists(MODEL_INFO_PATH):
             raise FileNotFoundError(
-                f"model_trainer directory not found at: {model_trainer_dir}"
+                f"model_info.yaml not found at {MODEL_INFO_PATH}. "
+                "Run the training pipeline first."
             )
 
-        logging.info(f"Using latest model_trainer dir: {model_trainer_dir}")
-        return model_trainer_dir
+        with open(MODEL_INFO_PATH, "r") as f:
+            info = yaml.safe_load(f)
+
+        final_info = info.get("final_model", {})
+        model_dir = final_info.get("model_dir", None)
+
+        if model_dir is None:
+            raise ValueError(
+                "model_info.yaml 'final_model' section must contain 'model_dir'."
+            )
+
+        if not os.path.isdir(model_dir):
+            raise FileNotFoundError(f"Final model directory not found: {model_dir}")
+
+        # sanity-check that the three files exist
+        expected_files = [
+            "xgb_egemaps_smote_optuna.pkl",
+            "preprocessing.pkl",
+            "label_encoder.pkl",
+        ]
+        missing = [
+            fname for fname in expected_files
+            if not os.path.exists(os.path.join(model_dir, fname))
+        ]
+        if missing:
+            raise FileNotFoundError(
+                f"Missing files in final model directory {model_dir}: {missing}"
+            )
+
+        logging.info(f"Using final_model directory from model_info.yaml: {model_dir}")
+        return model_dir
 
     except Exception as e:
         raise VisionInfantNetException(e, sys)
+
+
+def _get_prediction_pipeline() -> PredictionPipeline:
+    """
+   construct a PredictionPipeline using the final_model directory
+    specified in model_info.yaml.
+    """
+    global _predictor
+
+    if _predictor is not None:
+        return _predictor
+
+    model_dir = _get_final_model_dir_from_model_info()
+    #expects model_trainer_dir that directly contains xgb_egemaps_smote_optuna.pkl, preprocessing.pkl, label_encoder.pkl
+    _predictor = PredictionPipeline(model_trainer_dir=model_dir)
+    return _predictor
 
 
 # ----------------------------------------------------------------------
@@ -91,12 +139,17 @@ async def train_route():
       2. Data Validation
       3. Data Transformation
       4. Model Training (XGBoost + eGeMAPS + SMOTE + MLflow logging)
+      5. Copy final model to final_model/ and write model_info.yaml
     """
     try:
         logging.info("=== /train endpoint called: starting TrainingPipeline ===")
         pipeline = TrainingPipeline()
         model_trainer_artifact = pipeline.run_pipeline()
         logging.info("TrainingPipeline finished successfully.")
+
+        # Reset cached predictor so it reloads with the new final_model
+        global _predictor
+        _predictor = None
 
         return {
             "message": "Training completed successfully.",
@@ -108,9 +161,6 @@ async def train_route():
         raise VisionInfantNetException(e, sys)
 
 
-# ----------------------------------------------------------------------
-# /predict : multiple .wav files upload
-# ----------------------------------------------------------------------
 @app.post("/predict", tags=["prediction"])
 async def predict_route(
     request: Request,
@@ -119,21 +169,14 @@ async def predict_route(
     """
     Predict labels for uploaded audio segment(s).
 
-    Input:
-      - One or more .wav files (UploadFile)
-
     Steps:
       1. Save uploaded files to a local directory.
-      2. Load latest trained model via PredictionPipeline.
-      3. Extract eGeMAPS, preprocess, predict with XGBoost.
-      4. Return JSON with file names and predicted labels.
+      2. Build PredictionPipeline from final_model/model_info.yaml.
+      3. Predict labels for each file.
     """
     try:
         logging.info("=== /predict endpoint called ===")
 
-        # --------------------------------------------------------------
-        # Save uploads to a directory
-        # --------------------------------------------------------------
         upload_dir = "uploaded_audio"
         os.makedirs(upload_dir, exist_ok=True)
 
@@ -149,20 +192,9 @@ async def predict_route(
 
         logging.info(f"Saved {len(saved_paths)} uploaded audio files to {upload_dir}.")
 
-        # --------------------------------------------------------------
-        # Find latest model_trainer dir and create PredictionPipeline
-        # --------------------------------------------------------------
-        model_trainer_dir = _get_latest_model_trainer_dir(artifacts_root="artifacts")
-        predictor = PredictionPipeline(model_trainer_dir=model_trainer_dir)
-
-        # --------------------------------------------------------------
-        # Run prediction
-        # --------------------------------------------------------------
+        predictor = _get_prediction_pipeline()
         y_pred_enc, y_pred_dec, audio_paths = predictor.predict_from_audio(saved_paths)
 
-        # --------------------------------------------------------------
-        # Build response 
-        # --------------------------------------------------------------
         results = []
         for p, enc, dec in zip(audio_paths, y_pred_enc, y_pred_dec):
             results.append(
@@ -182,9 +214,6 @@ async def predict_route(
         raise VisionInfantNetException(e, sys)
 
 
-# ----------------------------------------------------------------------
-# /predict_zip : a single ZIP containing many .wav files
-# ----------------------------------------------------------------------
 @app.post("/predict_zip", tags=["prediction"])
 async def predict_zip_route(
     file: UploadFile = File(..., description="ZIP file containing .wav audio segments"),
@@ -197,14 +226,11 @@ async def predict_zip_route(
       2. Extract it to a temporary directory.
       3. Collect all .wav files recursively.
       4. Use PredictionPipeline to predict.
-      5. Return the same JSON structure as /predict.
+      5. Return results like /predict.
     """
     try:
         logging.info("=== /predict_zip endpoint called ===")
 
-        # --------------------------------------------------------------
-        # Save ZIP file
-        # --------------------------------------------------------------
         zip_upload_dir = "uploaded_zips"
         os.makedirs(zip_upload_dir, exist_ok=True)
 
@@ -214,18 +240,14 @@ async def predict_zip_route(
 
         logging.info(f"Saved uploaded ZIP to {zip_path}.")
 
-        # --------------------------------------------------------------
         # Extract ZIP to a temporary directory
-        # --------------------------------------------------------------
         extract_dir = tempfile.mkdtemp(prefix="segments_")
         logging.info(f"Extracting ZIP into {extract_dir}...")
 
         with zipfile.ZipFile(zip_path, "r") as zf:
             zf.extractall(extract_dir)
 
-        # --------------------------------------------------------------
-        # Collect all .wav files (recursive)
-        # --------------------------------------------------------------
+        # Collect all .wav files recursively
         audio_paths = []
         for root, _, filenames in os.walk(extract_dir):
             for fname in filenames:
@@ -239,20 +261,9 @@ async def predict_zip_route(
 
         logging.info(f"Found {len(audio_paths)} .wav files in extracted ZIP.")
 
-        # --------------------------------------------------------------
-        # Find latest model_trainer dir and create PredictionPipeline
-        # --------------------------------------------------------------
-        model_trainer_dir = _get_latest_model_trainer_dir(artifacts_root="artifacts")
-        predictor = PredictionPipeline(model_trainer_dir=model_trainer_dir)
-
-        # --------------------------------------------------------------
-        # Run prediction
-        # --------------------------------------------------------------
+        predictor = _get_prediction_pipeline()
         y_pred_enc, y_pred_dec, audio_paths = predictor.predict_from_audio(audio_paths)
 
-        # --------------------------------------------------------------
-        # Build response 
-        # --------------------------------------------------------------
         results = []
         for p, enc, dec in zip(audio_paths, y_pred_enc, y_pred_dec):
             results.append(

@@ -1,0 +1,42 @@
+[ 2025-12-10 11:52:40,199 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/user "HTTP/1.1 200 OK"
+[ 2025-12-10 11:52:40,203 ] 107 dagshub - INFO - Accessing as arunps12
+[ 2025-12-10 11:52:40,737 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/repos/arunps12/VisionInfantNet "HTTP/1.1 200 OK"
+[ 2025-12-10 11:52:41,189 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/user "HTTP/1.1 200 OK"
+[ 2025-12-10 11:52:41,191 ] 107 dagshub - INFO - Initialized MLflow to track repo "arunps12/VisionInfantNet"
+[ 2025-12-10 11:52:41,191 ] 107 dagshub - INFO - Repository arunps12/VisionInfantNet initialized!
+[ 2025-12-10 11:53:28,387 ] 178 root - INFO - === /predict endpoint called ===
+[ 2025-12-10 11:53:28,391 ] 193 root - INFO - Saved 1 uploaded audio files to uploaded_audio.
+[ 2025-12-10 11:53:28,395 ] 102 root - INFO - Using final_model directory from model_info.yaml: final_model
+[ 2025-12-10 11:53:28,395 ] 37 root - INFO - Initializing PredictionPipeline with dir: final_model
+[ 2025-12-10 11:53:28,785 ] 61 root - INFO - PredictionPipeline initialized successfully.
+[ 2025-12-10 11:53:28,786 ] 163 root - INFO - Starting prediction for audio source.
+[ 2025-12-10 11:53:28,786 ] 167 root - INFO - Resolved 1 audio files for prediction.
+[ 2025-12-10 11:53:28,786 ] 123 root - INFO - Extracting eGeMAPS for 1 files...
+[ 2025-12-10 11:53:28,871 ] 131 root - INFO - eGeMAPS feature matrix shape: (1, 88)
+[ 2025-12-10 11:53:28,871 ] 173 root - INFO - Applying preprocessing to eGeMAPS features...
+[ 2025-12-10 11:53:28,872 ] 177 root - INFO - Running XGBoost model predictions...
+[ 2025-12-10 11:53:28,875 ] 181 root - INFO - Decoding predictions with LabelEncoder...
+[ 2025-12-10 11:53:28,875 ] 184 root - INFO - Prediction completed successfully.
+[ 2025-12-10 11:53:28,875 ] 209 root - INFO - Prediction completed for all uploaded files.
+[ 2025-12-10 11:53:42,347 ] 178 root - INFO - === /predict endpoint called ===
+[ 2025-12-10 11:53:42,351 ] 193 root - INFO - Saved 1 uploaded audio files to uploaded_audio.
+[ 2025-12-10 11:53:42,351 ] 163 root - INFO - Starting prediction for audio source.
+[ 2025-12-10 11:53:42,351 ] 167 root - INFO - Resolved 1 audio files for prediction.
+[ 2025-12-10 11:53:42,352 ] 123 root - INFO - Extracting eGeMAPS for 1 files...
+[ 2025-12-10 11:53:42,387 ] 131 root - INFO - eGeMAPS feature matrix shape: (1, 88)
+[ 2025-12-10 11:53:42,387 ] 173 root - INFO - Applying preprocessing to eGeMAPS features...
+[ 2025-12-10 11:53:42,387 ] 177 root - INFO - Running XGBoost model predictions...
+[ 2025-12-10 11:53:42,389 ] 181 root - INFO - Decoding predictions with LabelEncoder...
+[ 2025-12-10 11:53:42,389 ] 184 root - INFO - Prediction completed successfully.
+[ 2025-12-10 11:53:42,390 ] 209 root - INFO - Prediction completed for all uploaded files.
+[ 2025-12-10 11:53:53,485 ] 178 root - INFO - === /predict endpoint called ===
+[ 2025-12-10 11:53:53,546 ] 193 root - INFO - Saved 1 uploaded audio files to uploaded_audio.
+[ 2025-12-10 11:53:53,546 ] 163 root - INFO - Starting prediction for audio source.
+[ 2025-12-10 11:53:53,546 ] 167 root - INFO - Resolved 1 audio files for prediction.
+[ 2025-12-10 11:53:53,546 ] 123 root - INFO - Extracting eGeMAPS for 1 files...
+[ 2025-12-10 11:53:53,586 ] 131 root - INFO - eGeMAPS feature matrix shape: (1, 88)
+[ 2025-12-10 11:53:53,586 ] 173 root - INFO - Applying preprocessing to eGeMAPS features...
+[ 2025-12-10 11:53:53,587 ] 177 root - INFO - Running XGBoost model predictions...
+[ 2025-12-10 11:53:53,588 ] 181 root - INFO - Decoding predictions with LabelEncoder...
+[ 2025-12-10 11:53:53,589 ] 184 root - INFO - Prediction completed successfully.
+[ 2025-12-10 11:53:53,589 ] 209 root - INFO - Prediction completed for all uploaded files.

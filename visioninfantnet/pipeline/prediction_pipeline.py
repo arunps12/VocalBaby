@@ -41,18 +41,15 @@ class PredictionPipeline:
             
             self.model_path = os.path.join(
                 self.model_trainer_dir,
-                "trained_model",
                 "xgb_egemaps_smote_optuna.pkl",
             )
             self.preprocessing_path = os.path.join(
                 self.model_trainer_dir,
-                "preprocessing",
                 "preprocessing.pkl",
             )
             
             self.label_encoder_path = os.path.join(
                 self.model_trainer_dir,
-                "preprocessing",
                 "label_encoder.pkl",
             )
 
