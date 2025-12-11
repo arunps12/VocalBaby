@@ -59,9 +59,22 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
-          IMAGE_TAG: latest
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          # set step output using the recommended GITHUB_OUTPUT file approach
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "ECR_REGISTRY=${ECR_REGISTRY}"
+          echo "ECR_REPOSITORY=${ECR_REPOSITORY}"
+          echo "IMAGE_TAG=${IMAGE_TAG}"
+
+          
+          if [ -z "${ECR_REGISTRY}" ] || [ -z "${ECR_REPOSITORY}" ] || [ -z "${IMAGE_TAG}" ]; then
+            echo "ERROR: One or more required variables are empty. Check login-ecr output and secrets." >&2
+            exit 1
+          fi
+
+          
+          docker buildx build --platform linux/amd64 \
+            --tag "${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}" \
+            --push .
+
+          
+          echo "image=${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
