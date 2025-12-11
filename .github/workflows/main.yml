@@ -61,20 +61,29 @@ jobs:
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          echo "ECR_REGISTRY=${ECR_REGISTRY}"
-          echo "ECR_REPOSITORY=${ECR_REPOSITORY}"
-          echo "IMAGE_TAG=${IMAGE_TAG}"
+          set -euo pipefail
 
           
-          if [ -z "${ECR_REGISTRY}" ] || [ -z "${ECR_REPOSITORY}" ] || [ -z "${IMAGE_TAG}" ]; then
-            echo "ERROR: One or more required variables are empty. Check login-ecr output and secrets." >&2
+          echo "Raw ECR_REGISTRY='${ECR_REGISTRY}'"
+          echo "Raw ECR_REPOSITORY='${ECR_REPOSITORY}'"
+          echo "IMAGE_TAG='${IMAGE_TAG}'"
+
+          
+          SANITIZED_REGISTRY=$(printf "%s" "${ECR_REGISTRY}" | tr -d '\r\n')
+          SANITIZED_REPOSITORY=$(printf "%s" "${ECR_REPOSITORY}" | tr -d '\r\n')
+
+          echo "Sanitized ECR_REGISTRY='${SANITIZED_REGISTRY}'"
+          echo "Sanitized ECR_REPOSITORY='${SANITIZED_REPOSITORY}'"
+
+          if [ -z "${SANITIZED_REGISTRY}" ] || [ -z "${SANITIZED_REPOSITORY}" ] || [ -z "${IMAGE_TAG}" ]; then
+            echo "ERROR: One or more required variables are empty after sanitization." >&2
             exit 1
           fi
 
           
           docker buildx build --platform linux/amd64 \
-            --tag "${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}" \
+            --tag "${SANITIZED_REGISTRY}/${SANITIZED_REPOSITORY}:${IMAGE_TAG}" \
             --push .
 
           
-          echo "image=${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "image=${SANITIZED_REGISTRY}/${SANITIZED_REPOSITORY}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
