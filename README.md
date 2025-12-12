@@ -19,6 +19,9 @@ It combines:
 The system is structured using a clean, extensible, MLOps-friendly design  
 with components housed in the `visioninfantnet/` package.
 
+> ℹ️ **Training setup:**  
+> The current model is trained mostly on short audio segments of about **400 ms**, so the prediction
+> pipeline supports both **whole-file** and **chunk-based** inference to match this.
 ---
 
 # ⚙️ Installation
