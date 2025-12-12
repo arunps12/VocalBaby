@@ -146,8 +146,6 @@ y_enc, y_dec, paths = pipe.predict_from_audio(files)
 
 # 🚀 Future Enhancements
 
-You can extend VisionInfantNet to:
-
 - CNN models over mel-spectrogram images 
 - Other image model like ResNet50 over mel-spectrogram images
 - wav2vec2 embeddings  
