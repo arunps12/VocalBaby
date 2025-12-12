@@ -62,28 +62,18 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           set -euo pipefail
-
-          
           echo "Raw ECR_REGISTRY='${ECR_REGISTRY}'"
           echo "Raw ECR_REPOSITORY='${ECR_REPOSITORY}'"
           echo "IMAGE_TAG='${IMAGE_TAG}'"
-
-          
           SANITIZED_REGISTRY=$(printf "%s" "${ECR_REGISTRY}" | tr -d '\r\n')
           SANITIZED_REPOSITORY=$(printf "%s" "${ECR_REPOSITORY}" | tr -d '\r\n')
-
           echo "Sanitized ECR_REGISTRY='${SANITIZED_REGISTRY}'"
           echo "Sanitized ECR_REPOSITORY='${SANITIZED_REPOSITORY}'"
-
           if [ -z "${SANITIZED_REGISTRY}" ] || [ -z "${SANITIZED_REPOSITORY}" ] || [ -z "${IMAGE_TAG}" ]; then
             echo "ERROR: One or more required variables are empty after sanitization." >&2
             exit 1
           fi
-
-          
           docker buildx build --platform linux/amd64 \
             --tag "${SANITIZED_REGISTRY}/${SANITIZED_REPOSITORY}:${IMAGE_TAG}" \
             --push .
-
-          
           echo "image=${SANITIZED_REGISTRY}/${SANITIZED_REPOSITORY}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
