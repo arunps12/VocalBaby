@@ -142,10 +142,10 @@ dmypy.json
 *.csv
 
 # Model weights
-*.pt
-*.pth
-*.h5
-*.pkl
+#*.pt
+#*.pth
+#*.h5
+#*.pkl
 # notebook
 
 #image files
