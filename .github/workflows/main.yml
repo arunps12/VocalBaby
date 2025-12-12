@@ -31,8 +31,6 @@ jobs:
     name: Continuous Delivery
     needs: integration
     runs-on: ubuntu-latest
-    outputs:
-      image: ${{ steps.build-image.outputs.image }}
 
     steps:
       - name: Checkout Code
@@ -62,21 +60,25 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           set -euo pipefail
+
           echo "Raw ECR_REGISTRY='${ECR_REGISTRY}'"
           echo "Raw ECR_REPOSITORY='${ECR_REPOSITORY}'"
           echo "IMAGE_TAG='${IMAGE_TAG}'"
+
           SANITIZED_REGISTRY=$(printf "%s" "${ECR_REGISTRY}" | tr -d '\r\n')
           SANITIZED_REPOSITORY=$(printf "%s" "${ECR_REPOSITORY}" | tr -d '\r\n')
+
           echo "Sanitized ECR_REGISTRY='${SANITIZED_REGISTRY}'"
           echo "Sanitized ECR_REPOSITORY='${SANITIZED_REPOSITORY}'"
+
           if [ -z "${SANITIZED_REGISTRY}" ] || [ -z "${SANITIZED_REPOSITORY}" ] || [ -z "${IMAGE_TAG}" ]; then
             echo "ERROR: One or more required variables are empty after sanitization." >&2
             exit 1
           fi
+
           docker buildx build --platform linux/amd64 \
             --tag "${SANITIZED_REGISTRY}/${SANITIZED_REPOSITORY}:${IMAGE_TAG}" \
             --push .
-          echo "image=${SANITIZED_REGISTRY}/${SANITIZED_REPOSITORY}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
   continuous-deployment:
     name: Continuous Deployment
@@ -98,9 +100,13 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Pull image built in previous job
+      - name: Pull image built for this commit
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          IMAGE="${{ needs.build-and-push-ecr-image.outputs.image }}"
+          IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
           echo "Pulling image: $IMAGE"
           docker pull "$IMAGE"
 
@@ -115,8 +121,12 @@ jobs:
           fi
 
       - name: Run Docker container (VisionInfantNet API)
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          IMAGE="${{ needs.build-and-push-ecr-image.outputs.image }}"
+          IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
           echo "Starting container from image: $IMAGE"
 
           docker run -d -p 8080:8080 --ipc="host" \
