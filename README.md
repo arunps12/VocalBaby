@@ -6,7 +6,7 @@ for Infant Vocalization Classification
 
 ## 📌 Overview
 
-**VisionInfantNet** is a complete machine-learning framework designed for 
+**VocalBaby** is a complete machine-learning framework designed for 
 automatic classification of infant and adult vocalizations.  
 It combines:
 
