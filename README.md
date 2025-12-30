@@ -1,13 +1,11 @@
 # VocalBaby
-An end-to-end Audio Feature Extraction + Machine Learning Pipeline  
-for Infant Vocalization Classification
+VocalBaby is an end-to-end audio classification system designed for child language acquisition research, focusing on infant and adult vocalizations in naturalistic interaction recordings.
 
 ---
 
 ## 📌 Overview
 
-**VocalBaby** is a complete machine-learning framework designed for 
-automatic classification of infant and adult vocalizations.  
+**VocalBaby** is an end-to-end audio classification system designed for child language acquisition research, focusing on infant and adult vocalizations in naturalistic interaction recordings. The system emphasizes the full pipeline from raw audio ingestion and acoustic feature extraction to supervised model training, evaluation, and user-facing analysis, enabling large-scale, reproducible studies of early vocal development.
 It combines:
 
 - 🔹 **eGeMAPS acoustic feature extraction**  
