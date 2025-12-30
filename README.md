@@ -1,7 +1,3 @@
-# VocalBaby
-VocalBaby is an end-to-end audio classification system designed for child language acquisition research, focusing on infant and adult vocalizations in naturalistic interaction recordings.
-
----
 
 ## 📌 Overview
 
