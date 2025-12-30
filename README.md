@@ -1,5 +1,5 @@
 # VocalBaby
-A Modular Audio Feature Extraction + Machine Learning Pipeline  
+An end-to-end Audio Feature Extraction + Machine Learning Pipeline  
 for Infant Vocalization Classification
 
 ---
