@@ -1,4 +1,4 @@
-# VisionInfantNet  
+# VocalBaby
 A Modular Audio Feature Extraction + Machine Learning Pipeline  
 for Infant Vocalization Classification
 
@@ -28,8 +28,8 @@ with components housed in the `visioninfantnet/` package.
 
 ### 1️⃣ Clone the repository
 ```bash
-git clone https://github.com/arunps12/VisionInfantNet.git
-cd VisionInfantNet
+git clone https://github.com/arunps12/VocalBaby.git
+cd VocalBaby
 ```
 
 ### 2️⃣ Create & activate a virtual environment
