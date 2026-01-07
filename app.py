@@ -8,19 +8,20 @@ from typing import List, Optional
 import yaml
 from fastapi import FastAPI, File, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from starlette.responses import RedirectResponse
 from uvicorn import run as app_run
 
 from visioninfantnet.exception.exception import VisionInfantNetException
 from visioninfantnet.logging.logger import logging
 
-from visioninfantnet.pipeline.training_pipeline import TrainingPipeline
+# Prediction 
 from visioninfantnet.pipeline.prediction_pipeline import PredictionPipeline
 
 
 app = FastAPI(
-    title="VisionInfantNet API",
-    description="Training + Prediction API for VisionInfantNet (XGBoost on eGeMAPS)",
+    title="VisionInfantNet API (Prediction Only)",
+    description="Prediction API for VisionInfantNet (XGBoost on eGeMAPS). Training disabled.",
     version="1.0.0",
 )
 
@@ -47,59 +48,54 @@ _predictor: Optional[PredictionPipeline] = None
 
 def _get_final_model_dir_from_model_info() -> str:
     """
-    Use the `final_model` section in model_info.yaml to get the directory
-    where the 3 .pkl files are stored.
+    Reads final_model/model_info.yaml to locate the model directory + filenames.
 
-    model_info.yaml example:
+    Expected model_info.yaml structure:
 
     final_model:
       model_dir: final_model
       model_file: xgb_egemaps_smote_optuna.pkl
       preprocessing_file: preprocessing.pkl
       label_encoder_file: label_encoder.pkl
-
-    Only need `model_dir` here, and PredictionPipeline expects:
-      model_trainer_dir/xgb_egemaps_smote_optuna.pkl
-      model_trainer_dir/preprocessing.pkl
-      model_trainer_dir/label_encoder.pkl
     """
     try:
         if not os.path.exists(MODEL_INFO_PATH):
             raise FileNotFoundError(
                 f"model_info.yaml not found at {MODEL_INFO_PATH}. "
-                "Run the training pipeline first."
+                "Ensure `final_model/` is included in the Docker image."
             )
 
         with open(MODEL_INFO_PATH, "r") as f:
-            info = yaml.safe_load(f)
+            info = yaml.safe_load(f) or {}
 
         final_info = info.get("final_model", {})
-        model_dir = final_info.get("model_dir", None)
+        model_dir = final_info.get("model_dir")
+        model_file = final_info.get("model_file")
+        preprocessing_file = final_info.get("preprocessing_file")
+        label_encoder_file = final_info.get("label_encoder_file")
 
-        if model_dir is None:
-            raise ValueError(
-                "model_info.yaml 'final_model' section must contain 'model_dir'."
-            )
-
+        if not model_dir:
+            raise ValueError("model_info.yaml: final_model.model_dir is missing.")
         if not os.path.isdir(model_dir):
             raise FileNotFoundError(f"Final model directory not found: {model_dir}")
 
-        # sanity-check that the three files exist
-        expected_files = [
-            "xgb_egemaps_smote_optuna.pkl",
-            "preprocessing.pkl",
-            "label_encoder.pkl",
+        # Sanity-check that all required files exist (no hard-coded names)
+        required_files = [model_file, preprocessing_file, label_encoder_file]
+        missing_keys = [k for k in ["model_file", "preprocessing_file", "label_encoder_file"] if not final_info.get(k)]
+        if missing_keys:
+            raise ValueError(f"model_info.yaml: missing keys in final_model: {missing_keys}")
+
+        missing_files = [
+            f for f in required_files
+            if not os.path.exists(os.path.join(model_dir, f))
         ]
-        missing = [
-            fname for fname in expected_files
-            if not os.path.exists(os.path.join(model_dir, fname))
-        ]
-        if missing:
+        if missing_files:
             raise FileNotFoundError(
-                f"Missing files in final model directory {model_dir}: {missing}"
+                f"Missing files in {model_dir}: {missing_files}. "
+                "Make sure final_model/ is present inside the container."
             )
 
-        logging.info(f"Using final_model directory from model_info.yaml: {model_dir}")
+        logging.info(f"Using final model directory: {model_dir}")
         return model_dir
 
     except Exception as e:
@@ -107,17 +103,13 @@ def _get_final_model_dir_from_model_info() -> str:
 
 
 def _get_prediction_pipeline() -> PredictionPipeline:
-    """
-   construct a PredictionPipeline using the final_model directory
-    specified in model_info.yaml.
-    """
+    """Construct (and cache) PredictionPipeline from model_info.yaml."""
     global _predictor
 
     if _predictor is not None:
         return _predictor
 
     model_dir = _get_final_model_dir_from_model_info()
-    #expects model_trainer_dir that directly contains xgb_egemaps_smote_optuna.pkl, preprocessing.pkl, label_encoder.pkl
     _predictor = PredictionPipeline(model_trainer_dir=model_dir)
     return _predictor
 
@@ -131,34 +123,19 @@ async def index():
     return RedirectResponse(url="/docs")
 
 
-@app.get("/train", tags=["training"])
-async def train_route():
+@app.get("/health", tags=["health"])
+async def health():
     """
-    Run the full training pipeline:
-      1. Data Ingestion
-      2. Data Validation
-      3. Data Transformation
-      4. Model Training (XGBoost + eGeMAPS + SMOTE + MLflow logging)
-      5. Copy final model to final_model/ and write model_info.yaml
+    Lightweight health check.
+    Confirms that final_model + model_info + required files exist.
     """
     try:
-        logging.info("=== /train endpoint called: starting TrainingPipeline ===")
-        pipeline = TrainingPipeline()
-        model_trainer_artifact = pipeline.run_pipeline()
-        logging.info("TrainingPipeline finished successfully.")
-
-        # Reset cached predictor so it reloads with the new final_model
-        global _predictor
-        _predictor = None
-
-        return {
-            "message": "Training completed successfully.",
-            "model_trainer_artifact": str(model_trainer_artifact),
-        }
-
+        model_dir = _get_final_model_dir_from_model_info()
+        return {"status": "ok", "model_dir": model_dir}
     except Exception as e:
-        logging.exception("Error occurred in /train endpoint.")
-        raise VisionInfantNetException(e, sys)
+        # Return 503 instead of crashing
+        logging.exception("Health check failed.")
+        return JSONResponse(status_code=503, content={"status": "error", "detail": str(e)})
 
 
 @app.post("/predict", tags=["prediction"])
@@ -170,9 +147,9 @@ async def predict_route(
     Predict labels for uploaded audio segment(s).
 
     Steps:
-      1. Save uploaded files to a local directory.
-      2. Build PredictionPipeline from final_model/model_info.yaml.
-      3. Predict labels for each file.
+      1) Save uploaded files to uploaded_audio/
+      2) Load PredictionPipeline from final_model/model_info.yaml
+      3) Predict labels
     """
     try:
         logging.info("=== /predict endpoint called ===")
@@ -220,13 +197,6 @@ async def predict_zip_route(
 ):
     """
     Predict labels for a ZIP archive of audio segments.
-
-    Steps:
-      1. Save uploaded ZIP file.
-      2. Extract it to a temporary directory.
-      3. Collect all .wav files recursively.
-      4. Use PredictionPipeline to predict.
-      5. Return results like /predict.
     """
     try:
         logging.info("=== /predict_zip endpoint called ===")
@@ -287,4 +257,11 @@ async def predict_zip_route(
 # Entry point
 # ----------------------------------------------------------------------
 if __name__ == "__main__":
+    # Optional: eager-load predictor on startup so container fails fast if model missing
+    try:
+        _ = _get_prediction_pipeline()
+        logging.info("Model loaded successfully at startup.")
+    except Exception:
+        logging.exception("Failed to load model at startup. Container will still start, but /predict will fail.")
+
     app_run(app, host="0.0.0.0", port=8080)

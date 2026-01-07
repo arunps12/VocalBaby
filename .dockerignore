@@ -1,0 +1,58 @@
+# data / artifacts
+data/
+datasets/
+raw/
+processed/
+artifacts/
+mlruns/
+outputs/
+logs/
+
+# model checkpoints
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# audio/video large files
+*.wav
+*.flac
+*.mp3
+*.mp4
+
+# python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ipynb_checkpoints/
+
+# venv
+venv/
+.venv/
+
+# git + misc
+.git/
+.gitignore
+.DS_Store
+*.log
+
+# OS / editor
+.vscode/
+.idea/
+
+# secrets (if any)
+.env
+*.pem
+*.key
+# compressed files
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+# Jupyter notebooks
+*.ipynb
+# Python packaging
+*.egg-info/
+build/
+dist/

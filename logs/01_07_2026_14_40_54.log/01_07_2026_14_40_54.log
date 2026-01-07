@@ -1,0 +1,55 @@
+[ 2026-01-07 14:41:36,375 ] 98 root - INFO - Using final model directory: final_model
+[ 2026-01-07 14:41:36,375 ] 33 root - INFO - Initializing PredictionPipeline with dir: final_model
+[ 2026-01-07 14:41:37,374 ] 52 root - INFO - PredictionPipeline initialized successfully.
+[ 2026-01-07 14:41:37,374 ] 263 root - INFO - Model loaded successfully at startup.
+[ 2026-01-07 14:42:09,880 ] 98 root - INFO - Using final model directory: final_model
+[ 2026-01-07 14:43:01,087 ] 155 root - INFO - === /predict endpoint called ===
+[ 2026-01-07 14:43:01,167 ] 170 root - INFO - Saved 1 uploaded audio files to uploaded_audio.
+[ 2026-01-07 14:43:01,167 ] 202 root - INFO - Starting prediction for audio source.
+[ 2026-01-07 14:43:01,167 ] 204 root - INFO - Resolved 1 audio files for prediction.
+[ 2026-01-07 14:43:01,189 ] 127 root - INFO - Chunking + extracting eGeMAPS for: uploaded_audio/WW04_segment1_0_InfantX.wav
+[ 2026-01-07 14:43:06,761 ] 170 root - INFO - Extracted 2 chunks for uploaded_audio/WW04_segment1_0_InfantX.wav, shape=(2, 88)
+[ 2026-01-07 14:43:06,761 ] 222 root - INFO - Applying preprocessing for file: uploaded_audio/WW04_segment1_0_InfantX.wav
+[ 2026-01-07 14:43:06,762 ] 227 root - INFO - Running model.predict_proba on chunks...
+[ 2026-01-07 14:43:06,780 ] 247 root - INFO - Prediction completed successfully.
+[ 2026-01-07 14:43:06,780 ] 186 root - INFO - Prediction completed for all uploaded files.
+[ 2026-01-07 14:44:00,730 ] 155 root - INFO - === /predict endpoint called ===
+[ 2026-01-07 14:44:00,733 ] 170 root - INFO - Saved 1 uploaded audio files to uploaded_audio.
+[ 2026-01-07 14:44:00,733 ] 202 root - INFO - Starting prediction for audio source.
+[ 2026-01-07 14:44:00,733 ] 204 root - INFO - Resolved 1 audio files for prediction.
+[ 2026-01-07 14:44:00,733 ] 127 root - INFO - Chunking + extracting eGeMAPS for: uploaded_audio/WW04_segment1_10_IDS.wav
+[ 2026-01-07 14:44:00,813 ] 170 root - INFO - Extracted 3 chunks for uploaded_audio/WW04_segment1_10_IDS.wav, shape=(3, 88)
+[ 2026-01-07 14:44:00,813 ] 222 root - INFO - Applying preprocessing for file: uploaded_audio/WW04_segment1_10_IDS.wav
+[ 2026-01-07 14:44:00,813 ] 227 root - INFO - Running model.predict_proba on chunks...
+[ 2026-01-07 14:44:00,816 ] 247 root - INFO - Prediction completed successfully.
+[ 2026-01-07 14:44:00,816 ] 186 root - INFO - Prediction completed for all uploaded files.
+[ 2026-01-07 14:44:15,641 ] 155 root - INFO - === /predict endpoint called ===
+[ 2026-01-07 14:44:15,644 ] 170 root - INFO - Saved 1 uploaded audio files to uploaded_audio.
+[ 2026-01-07 14:44:15,644 ] 202 root - INFO - Starting prediction for audio source.
+[ 2026-01-07 14:44:15,644 ] 204 root - INFO - Resolved 1 audio files for prediction.
+[ 2026-01-07 14:44:15,645 ] 127 root - INFO - Chunking + extracting eGeMAPS for: uploaded_audio/WW04_segment1_14_InfantC.wav
+[ 2026-01-07 14:44:15,730 ] 170 root - INFO - Extracted 3 chunks for uploaded_audio/WW04_segment1_14_InfantC.wav, shape=(3, 88)
+[ 2026-01-07 14:44:15,730 ] 222 root - INFO - Applying preprocessing for file: uploaded_audio/WW04_segment1_14_InfantC.wav
+[ 2026-01-07 14:44:15,731 ] 227 root - INFO - Running model.predict_proba on chunks...
+[ 2026-01-07 14:44:15,734 ] 247 root - INFO - Prediction completed successfully.
+[ 2026-01-07 14:44:15,734 ] 186 root - INFO - Prediction completed for all uploaded files.
+[ 2026-01-07 14:44:25,235 ] 155 root - INFO - === /predict endpoint called ===
+[ 2026-01-07 14:44:25,238 ] 170 root - INFO - Saved 1 uploaded audio files to uploaded_audio.
+[ 2026-01-07 14:44:25,238 ] 202 root - INFO - Starting prediction for audio source.
+[ 2026-01-07 14:44:25,238 ] 204 root - INFO - Resolved 1 audio files for prediction.
+[ 2026-01-07 14:44:25,239 ] 127 root - INFO - Chunking + extracting eGeMAPS for: uploaded_audio/WW04_segment1_15_Other.wav
+[ 2026-01-07 14:44:25,240 ] 134 root - INFO - File shorter than chunk_duration -> using whole file.
+[ 2026-01-07 14:44:25,267 ] 222 root - INFO - Applying preprocessing for file: uploaded_audio/WW04_segment1_15_Other.wav
+[ 2026-01-07 14:44:25,268 ] 227 root - INFO - Running model.predict_proba on chunks...
+[ 2026-01-07 14:44:25,271 ] 247 root - INFO - Prediction completed successfully.
+[ 2026-01-07 14:44:25,281 ] 186 root - INFO - Prediction completed for all uploaded files.
+[ 2026-01-07 14:44:35,742 ] 155 root - INFO - === /predict endpoint called ===
+[ 2026-01-07 14:44:35,746 ] 170 root - INFO - Saved 1 uploaded audio files to uploaded_audio.
+[ 2026-01-07 14:44:35,746 ] 202 root - INFO - Starting prediction for audio source.
+[ 2026-01-07 14:44:35,746 ] 204 root - INFO - Resolved 1 audio files for prediction.
+[ 2026-01-07 14:44:35,747 ] 127 root - INFO - Chunking + extracting eGeMAPS for: uploaded_audio/WW04_segment2_1_InfantC.wav
+[ 2026-01-07 14:44:35,804 ] 170 root - INFO - Extracted 2 chunks for uploaded_audio/WW04_segment2_1_InfantC.wav, shape=(2, 88)
+[ 2026-01-07 14:44:35,804 ] 222 root - INFO - Applying preprocessing for file: uploaded_audio/WW04_segment2_1_InfantC.wav
+[ 2026-01-07 14:44:35,804 ] 227 root - INFO - Running model.predict_proba on chunks...
+[ 2026-01-07 14:44:35,808 ] 247 root - INFO - Prediction completed successfully.
+[ 2026-01-07 14:44:35,816 ] 186 root - INFO - Prediction completed for all uploaded files.
