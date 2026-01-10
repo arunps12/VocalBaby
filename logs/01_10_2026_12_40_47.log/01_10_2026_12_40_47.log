@@ -1,0 +1,82 @@
+[ 2026-01-10 12:41:26,797 ] 74 dagshub.auth.tokens - INFO - Removed expired tokens from the token cache
+[ 2026-01-10 12:41:39,220 ] 1025 httpx - INFO - HTTP Request: POST https://dagshub.com/login/oauth/middleman "HTTP/1.1 200 OK"
+[ 2026-01-10 12:41:39,621 ] 1025 httpx - INFO - HTTP Request: POST https://dagshub.com/login/oauth/access_token "HTTP/1.1 200 OK"
+[ 2026-01-10 12:41:40,053 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/user "HTTP/1.1 200 OK"
+[ 2026-01-10 12:41:40,058 ] 107 dagshub - INFO - Accessing as arunps12
+[ 2026-01-10 12:41:40,559 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/repos/arunps12/VisionInfantNet "HTTP/1.1 200 OK"
+[ 2026-01-10 12:41:40,966 ] 1025 httpx - INFO - HTTP Request: GET https://dagshub.com/api/v1/user "HTTP/1.1 200 OK"
+[ 2026-01-10 12:41:40,967 ] 107 dagshub - INFO - Initialized MLflow to track repo "arunps12/VisionInfantNet"
+[ 2026-01-10 12:41:40,967 ] 107 dagshub - INFO - Repository arunps12/VisionInfantNet initialized!
+[ 2026-01-10 12:41:40,968 ] 25 root - INFO - === VisionInfantNet: Data Ingestion Pipeline Started ===
+[ 2026-01-10 12:41:40,968 ] 32 root - INFO - Initiating data ingestion...
+[ 2026-01-10 12:41:40,968 ] 141 root - INFO - ===== Data Ingestion Started =====
+[ 2026-01-10 12:41:41,082 ] 41 root - INFO - Loaded metadata (13478 rows) and saved snapshot to: artifacts/01_10_2026_12_40_47/data_ingestion/full_metadata.csv
+[ 2026-01-10 12:41:41,082 ] 55 root - INFO - Starting child-disjoint splitting...
+[ 2026-01-10 12:41:41,095 ] 87 root - INFO - train split created with 3600 samples.
+[ 2026-01-10 12:41:41,102 ] 87 root - INFO - valid split created with 3580 samples.
+[ 2026-01-10 12:41:41,109 ] 87 root - INFO - test split created with 3590 samples.
+[ 2026-01-10 12:41:54,135 ] 112 root - INFO - Copied 3600 audio files to: artifacts/01_10_2026_12_40_47/data_ingestion/ingested_audio/train
+[ 2026-01-10 12:42:05,725 ] 112 root - INFO - Copied 3580 audio files to: artifacts/01_10_2026_12_40_47/data_ingestion/ingested_audio/valid
+[ 2026-01-10 12:42:17,642 ] 112 root - INFO - Copied 3590 audio files to: artifacts/01_10_2026_12_40_47/data_ingestion/ingested_audio/test
+[ 2026-01-10 12:42:17,691 ] 131 root - INFO - Saved metadata: artifacts/01_10_2026_12_40_47/data_ingestion/ingested_metadata/train.csv (3600 rows)
+[ 2026-01-10 12:42:17,748 ] 131 root - INFO - Saved metadata: artifacts/01_10_2026_12_40_47/data_ingestion/ingested_metadata/valid.csv (3580 rows)
+[ 2026-01-10 12:42:17,866 ] 131 root - INFO - Saved metadata: artifacts/01_10_2026_12_40_47/data_ingestion/ingested_metadata/test.csv (3590 rows)
+[ 2026-01-10 12:42:17,866 ] 159 root - INFO - ===== Data Ingestion Completed Successfully =====
+[ 2026-01-10 12:42:17,868 ] 34 root - INFO - Data ingestion completed successfully.
+[ 2026-01-10 12:42:17,868 ] 35 root - INFO - DataIngestionArtifact: DataIngestionArtifact(train_metadata_path='artifacts/01_10_2026_12_40_47/data_ingestion/ingested_metadata/train.csv', valid_metadata_path='artifacts/01_10_2026_12_40_47/data_ingestion/ingested_metadata/valid.csv', test_metadata_path='artifacts/01_10_2026_12_40_47/data_ingestion/ingested_metadata/test.csv', train_audio_dir='artifacts/01_10_2026_12_40_47/data_ingestion/ingested_audio/train', valid_audio_dir='artifacts/01_10_2026_12_40_47/data_ingestion/ingested_audio/valid', test_audio_dir='artifacts/01_10_2026_12_40_47/data_ingestion/ingested_audio/test')
+[ 2026-01-10 12:42:17,868 ] 39 root - INFO - === VisionInfantNet: Data Ingestion Pipeline Finished ===
+[ 2026-01-10 12:42:17,869 ] 44 root - INFO - === VisionInfantNet: Data Validation Started ===
+[ 2026-01-10 12:42:17,869 ] 52 root - INFO - Initiating data validation...
+[ 2026-01-10 12:42:17,869 ] 323 root - INFO - ===== Data Validation Started =====
+[ 2026-01-10 12:42:17,899 ] 334 root - INFO - Schema/label/dtype validation OK? True
+[ 2026-01-10 12:42:17,900 ] 338 root - INFO - Child-disjoint validation OK? True
+[ 2026-01-10 12:42:33,011 ] 342 root - INFO - Audio validation OK? True
+[ 2026-01-10 12:42:33,205 ] 355 root - INFO - ===== Data Validation Completed =====
+[ 2026-01-10 12:42:33,205 ] 55 root - INFO - Data validation completed successfully.
+[ 2026-01-10 12:42:33,206 ] 56 root - INFO - DataValidationArtifact: DataValidationArtifact(validation_status=True, report_file_path='artifacts/01_10_2026_12_40_47/data_validation/validation_report.yaml', drift_report_file_path='artifacts/01_10_2026_12_40_47/data_validation/drift_report/drift_report.yaml', validated_train_metadata_path='artifacts/01_10_2026_12_40_47/data_validation/validated/metadata/train.csv', validated_validation_metadata_path='artifacts/01_10_2026_12_40_47/data_validation/validated/metadata/valid.csv', validated_test_metadata_path='artifacts/01_10_2026_12_40_47/data_validation/validated/metadata/test.csv', invalid_train_metadata_path='artifacts/01_10_2026_12_40_47/data_validation/invalid/metadata/invalid_train_metadata.csv', invalid_validation_metadata_path='artifacts/01_10_2026_12_40_47/data_validation/invalid/metadata/invalid_valid_metadata.csv', invalid_test_metadata_path='artifacts/01_10_2026_12_40_47/data_validation/invalid/metadata/invalid_test_metadata.csv', validated_train_audio_dir='artifacts/01_10_2026_12_40_47/data_ingestion/ingested_audio/train', validated_validation_audio_dir='artifacts/01_10_2026_12_40_47/data_ingestion/ingested_audio/valid', validated_test_audio_dir='artifacts/01_10_2026_12_40_47/data_ingestion/ingested_audio/test')
+[ 2026-01-10 12:42:33,206 ] 60 root - INFO - === VisionInfantNet: Data Validation Finished ===
+[ 2026-01-10 12:42:33,207 ] 65 root - INFO - === VisionInfantNet: Data Transformation Started ===
+[ 2026-01-10 12:42:33,207 ] 73 root - INFO - Initiating data transformation...
+[ 2026-01-10 12:42:33,208 ] 534 root - INFO - ===== Data Transformation Started  =====
+[ 2026-01-10 12:42:33,234 ] 371 root - INFO - Loaded validated metadata: train=3600, valid=3580, test=3590
+[ 2026-01-10 12:42:33,234 ] 544 root - INFO - Extracting base features for TRAIN split...
+[ 2026-01-10 12:42:33,234 ] 444 root - INFO - Extracting eGeMAPS-only base features for split with 3600 files...
+[ 2026-01-10 12:44:12,748 ] 549 root - INFO - Extracting base features for VALIDATION split...
+[ 2026-01-10 12:44:12,749 ] 444 root - INFO - Extracting eGeMAPS-only base features for split with 3580 files...
+[ 2026-01-10 12:45:47,679 ] 554 root - INFO - Extracting base features for TEST split...
+[ 2026-01-10 12:45:47,679 ] 444 root - INFO - Extracting eGeMAPS-only base features for split with 3590 files...
+[ 2026-01-10 12:47:24,154 ] 607 root - INFO - Creating feature directory if needed...
+[ 2026-01-10 12:47:24,496 ] 720 root - INFO - ===== Data Transformation Completed Successfully (eGeMAPS-only) =====
+[ 2026-01-10 12:47:24,497 ] 76 root - INFO - Data transformation completed successfully.
+[ 2026-01-10 12:47:24,497 ] 77 root - INFO - DataTransformationArtifact: DataTransformationArtifact(train_compare_feature_file_path='artifacts/01_10_2026_12_40_47/data_transformation/features/train_compare_features.npy', valid_compare_feature_file_path='artifacts/01_10_2026_12_40_47/data_transformation/features/valid_compare_features.npy', test_compare_feature_file_path='artifacts/01_10_2026_12_40_47/data_transformation/features/test_compare_features.npy', train_label_file_path='artifacts/01_10_2026_12_40_47/data_transformation/features/train_labels.npy', valid_label_file_path='artifacts/01_10_2026_12_40_47/data_transformation/features/valid_labels.npy', test_label_file_path='artifacts/01_10_2026_12_40_47/data_transformation/features/test_labels.npy')
+[ 2026-01-10 12:47:24,498 ] 81 root - INFO - === VisionInfantNet: Data Transformation Finished ===
+[ 2026-01-10 12:47:24,499 ] 86 root - INFO - === VisionInfantNet: Model Training Started ===
+[ 2026-01-10 12:47:24,499 ] 418 root - INFO - ==== Starting Model Trainer for XGB + eGeMAPS + SMOTE ====
+[ 2026-01-10 12:47:24,500 ] 113 root - INFO - Loading eGeMAPS (compare) features and labels from artifacts...
+[ 2026-01-10 12:47:24,509 ] 137 root - INFO - Shapes - X_train: (3600, 88), X_valid: (3580, 88), X_test: (3590, 88)
+[ 2026-01-10 12:47:24,509 ] 140 root - INFO - Shapes - y_train: (3600,), y_valid: (3580,), y_test: (3590,)
+[ 2026-01-10 12:47:24,509 ] 244 root - INFO - Encoding string labels with LabelEncoder...
+[ 2026-01-10 12:47:24,514 ] 31 root - INFO - Label encoding mapping:
+[ 2026-01-10 12:47:24,514 ] 35 root - INFO - Canonical → 0
+[ 2026-01-10 12:47:24,515 ] 35 root - INFO - Crying → 1
+[ 2026-01-10 12:47:24,515 ] 35 root - INFO - Junk → 2
+[ 2026-01-10 12:47:24,516 ] 35 root - INFO - Laughing → 3
+[ 2026-01-10 12:47:24,516 ] 35 root - INFO - Non-canonical → 4
+[ 2026-01-10 12:47:24,516 ] 254 root - INFO - Fitting SimpleImputer on training data and transforming...
+[ 2026-01-10 12:47:24,543 ] 261 root - INFO - Applying SMOTE on training data...
+[ 2026-01-10 12:47:24,840 ] 266 root - INFO - Resampled train shape: X_train_res=(7185, 88), y_train_res=(7185,)
+[ 2026-01-10 12:47:24,841 ] 274 root - INFO - Training XGBClassifier on resampled training data...
+[ 2026-01-10 12:47:31,544 ] 283 root - INFO - Generating predictions for train/valid/test...
+[ 2026-01-10 12:47:31,596 ] 289 root - INFO - Computing classification metrics (F1, Precision, Recall, UAR)...
+[ 2026-01-10 12:47:31,625 ] 299 root - INFO - Train metrics: F1=0.7796, Precision=0.7909, Recall=0.7764, UAR=0.8158
+[ 2026-01-10 12:47:31,625 ] 305 root - INFO - Valid metrics: F1=0.6076, Precision=0.6399, Recall=0.5925, UAR=0.4667
+[ 2026-01-10 12:47:31,625 ] 311 root - INFO - Test  metrics: F1=0.5938, Precision=0.6139, Recall=0.5816, UAR=0.4629
+[ 2026-01-10 12:47:31,625 ] 319 root - INFO - Saving preprocessing object (imputer) to artifacts/01_10_2026_12_40_47/model_trainer/preprocessing/preprocessing.pkl
+[ 2026-01-10 12:47:31,630 ] 328 root - INFO - Saving LabelEncoder to artifacts/01_10_2026_12_40_47/model_trainer/preprocessing/label_encoder.pkl
+[ 2026-01-10 12:47:31,632 ] 335 root - INFO - Saving trained XGB model to artifacts/01_10_2026_12_40_47/model_trainer/trained_model/xgb_egemaps_smote_optuna.pkl
+[ 2026-01-10 12:47:31,798 ] 348 root - INFO - Saving confusion matrices for train/valid/test...
+[ 2026-01-10 12:48:04,801 ] 402 root - INFO - ModelTrainerArtifact: ModelTrainerArtifact(trained_model_file_path='artifacts/01_10_2026_12_40_47/model_trainer/trained_model/xgb_egemaps_smote_optuna.pkl', preprocessing_object_file_path='artifacts/01_10_2026_12_40_47/model_trainer/preprocessing/preprocessing.pkl', label_encoder_file_path='artifacts/01_10_2026_12_40_47/model_trainer/preprocessing/label_encoder.pkl', train_metric_artifact=ClassificationMetricArtifact(f1_score=0.7796433177114547, precision_score=0.790944558611149, recall_score=0.7763888888888889, uar=0.8157837195126032), valid_metric_artifact=ClassificationMetricArtifact(f1_score=0.6076207961595036, precision_score=0.6399212547151218, recall_score=0.5924581005586592, uar=0.4667488981091169), test_metric_artifact=ClassificationMetricArtifact(f1_score=0.5938183153226734, precision_score=0.6139462363389586, recall_score=0.5816155988857938, uar=0.46289987029828944), train_confusion_matrix_path='artifacts/01_10_2026_12_40_47/model_trainer/confusion_matrices/train_cm.png', valid_confusion_matrix_path='artifacts/01_10_2026_12_40_47/model_trainer/confusion_matrices/valid_cm.png', test_confusion_matrix_path='artifacts/01_10_2026_12_40_47/model_trainer/confusion_matrices/test_cm.png')
+[ 2026-01-10 12:48:04,806 ] 420 root - INFO - ==== Model Trainer completed successfully ====
+[ 2026-01-10 12:48:04,806 ] 96 root - INFO - Model training completed successfully.
+[ 2026-01-10 12:48:04,806 ] 97 root - INFO - ModelTrainerArtifact: ModelTrainerArtifact(trained_model_file_path='artifacts/01_10_2026_12_40_47/model_trainer/trained_model/xgb_egemaps_smote_optuna.pkl', preprocessing_object_file_path='artifacts/01_10_2026_12_40_47/model_trainer/preprocessing/preprocessing.pkl', label_encoder_file_path='artifacts/01_10_2026_12_40_47/model_trainer/preprocessing/label_encoder.pkl', train_metric_artifact=ClassificationMetricArtifact(f1_score=0.7796433177114547, precision_score=0.790944558611149, recall_score=0.7763888888888889, uar=0.8157837195126032), valid_metric_artifact=ClassificationMetricArtifact(f1_score=0.6076207961595036, precision_score=0.6399212547151218, recall_score=0.5924581005586592, uar=0.4667488981091169), test_metric_artifact=ClassificationMetricArtifact(f1_score=0.5938183153226734, precision_score=0.6139462363389586, recall_score=0.5816155988857938, uar=0.46289987029828944), train_confusion_matrix_path='artifacts/01_10_2026_12_40_47/model_trainer/confusion_matrices/train_cm.png', valid_confusion_matrix_path='artifacts/01_10_2026_12_40_47/model_trainer/confusion_matrices/valid_cm.png', test_confusion_matrix_path='artifacts/01_10_2026_12_40_47/model_trainer/confusion_matrices/test_cm.png')
+[ 2026-01-10 12:48:04,807 ] 101 root - INFO - === VisionInfantNet: Pipeline Finished Successfully ===

@@ -162,3 +162,10 @@ dmypy.json
 *.rar
 *.tar
 *.7z
+
+# DVC files
+data/audio/raw/
+artifacts/
+final_model/
+data/
+
