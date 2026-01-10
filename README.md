@@ -14,7 +14,7 @@ It combines:
 All intermediate pipeline artifacts (e.g., processed metadata, feature matrices, and evaluation outputs) and final trained models are versioned and stored in **Amazon S3**, ensuring reproducibility and traceability across experiments. The full application and inference environment is containerized using **Docker**, with production-ready images built and pushed to **Amazon Elastic Container Registry (ECR)**.
 
 Continuous integration and deployment are managed via **GitHub Actions**, which automate testing, Docker image builds, and secure pushes to Amazon ECR. The containerized application and trained models are then deployed on **AWS EC2 instances**, enabling scalable experimentation and reliable user-facing analysis workflows.
-
+![CI/CD Pipeline for ChildLanguageAcquisition-RAG](docs/images/ci_cd_pipeline_.png.png)
 The system is structured using a clean, extensible, and MLOps-friendly design, with core components housed in the `visioninfantnet/` package.
 
 > ℹ️ **Training setup:**  
