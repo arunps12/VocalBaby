@@ -1,0 +1,55 @@
+stages:
+  ingestion:
+    cmd: bash scripts/run_ingestion.sh
+    deps:
+      - data/metadata/private_metadata.csv
+      - data/audio/raw
+      - data_schema/schema.yaml
+      - src/vocalbaby/components/data_ingestion.py
+    outs:
+      - artifacts/latest/data_ingestion/ingested_metadata:
+          cache: true
+      - artifacts/latest/data_ingestion/ingested_audio:
+          cache: true
+
+  validation:
+    cmd: bash scripts/run_validation.sh
+    deps:
+      - artifacts/latest/data_ingestion
+      - src/vocalbaby/components/data_validation.py
+    outs:
+      - artifacts/latest/data_validation/validation_report.yaml:
+          cache: true
+    metrics:
+      - artifacts/latest/data_validation/drift_report/drift_report.yaml:
+          cache: false
+
+  training:
+    cmd: bash scripts/run_training.sh
+    deps:
+      - artifacts/latest/data_validation
+      - src/vocalbaby/components/data_transformation.py
+      - src/vocalbaby/components/model_trainer.py
+      - configs/model.yaml
+    outs:
+      - artifacts/latest/model_trainer/trained_model:
+          cache: true
+      - artifacts/latest/model_trainer/preprocessing:
+          cache: true
+    metrics:
+      - artifacts/latest/model_trainer/confusion_matrices:
+          cache: false
+    plots:
+      - artifacts/latest/model_trainer/confusion_matrices:
+          cache: false
+
+  drift:
+    cmd: bash scripts/run_drift.sh
+    deps:
+      - artifacts/latest/data_transformation/features
+      - src/vocalbaby/monitoring/drift.py
+      - configs/drift.yaml
+    outs:
+      - artifacts/drift:
+          cache: true
+          persist: true
