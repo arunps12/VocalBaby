@@ -1,0 +1,30 @@
+# VocalBaby Training Pipeline Configuration
+training:
+  pipeline_name: vocalbaby_training
+  
+  data_ingestion:
+    raw_data_dir: data/audio/raw
+    metadata_file: data/metadata/private_metadata.csv
+    schema_file: data_schema/schema.yaml
+    
+  data_validation:
+    drift_threshold: 0.3
+    
+  data_transformation:
+    feature_set: egemaps
+    target_sr: 16000
+    
+  model_training:
+    model_type: xgboost
+    use_optuna: true
+    use_smote: true
+    test_size: 0.2
+    valid_size: 0.1
+    random_state: 42
+    
+  artifacts:
+    base_dir: artifacts
+    
+  cloud:
+    bucket_name: vocalbaby-artifacts
+    region: us-east-1

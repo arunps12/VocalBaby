@@ -6,26 +6,34 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Set working directory
 WORKDIR /app
 
-# Copy code
-COPY . /app
-
 # Install system dependencies
-# - awscli: for S3 / cloud operations 
-# - ffmpeg, libsndfile1, libstdc++6: required for librosa / soundfile / opensmile / torchaudio
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
         awscli \
         ffmpeg \
         libsndfile1 \
-        libstdc++6 && \
+        libstdc++6 \
+        curl && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements-prod.txt
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Copy dependency files first (layer caching)
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies (frozen from lock file)
+RUN uv sync --frozen --no-dev --no-editable
+
+# Copy source code
+COPY src/ ./src/
+COPY configs/ ./configs/
+
+# Copy final model artifacts (if available)
+COPY final_model/ ./final_model/
 
 # Expose FastAPI port
-EXPOSE 8080
+EXPOSE 8000
 
-# Run FastAPI app
-CMD ["python3", "app.py"]
+# Run VocalBaby server via console script
+CMD ["uv", "run", "vocalbaby-serve"]

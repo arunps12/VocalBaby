@@ -1,0 +1,29 @@
+# VocalBaby Drift Detection Configuration
+drift:
+  reference_data_path: artifacts/latest/data_transformation/features/train_compare_features.npy
+  reference_labels_path: artifacts/latest/data_transformation/features/train_labels.npy
+  
+  # Column-level drift
+  column_drift:
+    stattest: wasserstein
+    threshold: 0.1
+    
+  # Dataset-level drift
+  dataset_drift:
+    share_threshold: 0.3  # fraction of drifted columns to declare dataset drift
+
+  # Report output
+  report:
+    output_dir: artifacts/drift
+    html_report: true
+    json_report: true
+    
+  # Prometheus export
+  prometheus:
+    enabled: true
+    metric_name: vocalbaby_drift_score
+    push_gateway: null  # Set to push gateway URL if using Prometheus Pushgateway
+    
+  # Schedule
+  schedule:
+    cron: "0 2 * * *"  # Daily at 2am

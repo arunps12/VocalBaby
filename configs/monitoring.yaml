@@ -1,0 +1,37 @@
+# VocalBaby Monitoring Configuration
+monitoring:
+  prometheus:
+    enabled: true
+    port: 8000
+    endpoint: /metrics
+    
+  metrics:
+    - name: vocalbaby_request_total
+      type: counter
+      description: Total number of prediction requests
+      labels: [method, endpoint, status]
+      
+    - name: vocalbaby_request_latency_seconds
+      type: histogram
+      description: Request latency in seconds
+      buckets: [0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+      labels: [method, endpoint]
+      
+    - name: vocalbaby_prediction_errors_total
+      type: counter
+      description: Total number of prediction errors
+      labels: [error_type]
+      
+    - name: vocalbaby_model_info
+      type: info
+      description: Model version and metadata
+      labels: [model_version, model_type]
+      
+    - name: vocalbaby_drift_score
+      type: gauge
+      description: Latest drift detection score
+      labels: [feature_set]
+      
+  grafana:
+    dashboards_dir: monitoring/grafana/dashboards
+    provisioning_dir: monitoring/grafana/provisioning
