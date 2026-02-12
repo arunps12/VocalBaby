@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
-    {name = "Arun Prakash Singh", email = "mail@gmail.com"},
+    {name = "Arun Prakash Singh", email = "mail.arun1289@gmail.com"},
 ]
 keywords = ["machine-learning", "audio", "infant-cry", "xgboost", "mlops"]
 classifiers = [
