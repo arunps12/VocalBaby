@@ -83,8 +83,8 @@ def generate_drift_report(
         Dictionary with drift results
     """
     try:
-        from evidently.report import Report
-        from evidently.metric_preset import DataDriftPreset
+        from evidently import Report
+        from evidently.presets import DataDriftPreset
         
         os.makedirs(output_dir, exist_ok=True)
         
