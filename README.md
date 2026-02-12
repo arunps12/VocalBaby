@@ -51,6 +51,148 @@ All intermediate pipeline artifacts and final trained models are versioned and s
 
 ---
 
+## System Architecture & Workflow
+
+```mermaid
+flowchart TB
+    subgraph DATA["🎤 Data Layer"]
+        direction LR
+        RAW["Raw .wav Audio<br/><i>Naturalistic Recordings</i>"]
+        META["Metadata CSV<br/><i>child_ID · age · gender · Answer · corpus</i>"]
+    end
+
+    subgraph DVC_PIPELINE["⚙️ DVC Pipeline  <i>(dvc repro)</i>"]
+        direction TB
+        ING["<b>1 — Data Ingestion</b><br/>Train / Valid / Test split"]
+        VAL["<b>2 — Data Validation</b><br/>Schema check · Drift guard"]
+        TRANS["<b>3 — Feature Extraction</b><br/>openSMILE eGeMAPS → .npy"]
+        TRAIN["<b>4 — Model Training</b><br/>SMOTE · XGBoost · Optuna"]
+    end
+
+    subgraph ML_TOOLS["🧠 ML & Feature Stack"]
+        direction LR
+        SMILE["openSMILE<br/><i>eGeMAPS features</i>"]
+        SMOTE["imbalanced-learn<br/><i>SMOTE oversampling</i>"]
+        XGB["XGBoost<br/><i>Classifier</i>"]
+        OPTUNA["Optuna<br/><i>Hyperparameter tuning</i>"]
+        SKLEARN["scikit-learn<br/><i>Preprocessing · Metrics</i>"]
+    end
+
+    subgraph ARTIFACTS["📦 Model Artifacts"]
+        direction LR
+        MODEL["xgb_egemaps_smote_optuna.pkl"]
+        PREPROC["preprocessing.pkl"]
+        ENCODER["label_encoder.pkl"]
+    end
+
+    subgraph SERVING["🚀 Serving Layer"]
+        direction TB
+        API["<b>FastAPI Server</b><br/><i>vocalbaby-serve · port 8000</i>"]
+        PREDICT["Prediction Pipeline<br/><i>/predict · /predict_zip</i>"]
+        METRICS_EP["/metrics endpoint"]
+    end
+
+    subgraph MONITORING["📊 Monitoring Stack"]
+        direction LR
+        PROM["Prometheus<br/><i>Scrape metrics · Alerts</i>"]
+        GRAF["Grafana<br/><i>Dashboards · Visualization</i>"]
+        EVID["Evidently<br/><i>Data Drift Detection</i>"]
+    end
+
+    subgraph CICD["🔄 CI/CD  <i>(GitHub Actions)</i>"]
+        direction TB
+        LINT["<b>Lint & Test</b><br/>Ruff · pytest"]
+        BUILD["<b>Build & Push</b><br/>Docker → ECR"]
+        DEPLOY["<b>Deploy</b><br/>EC2 pull & restart"]
+        DRIFT_CRON["<b>Nightly Drift</b><br/>Scheduled cron job"]
+    end
+
+    subgraph INFRA["☁️ AWS Infrastructure  <i>(Terraform)</i>"]
+        direction LR
+        VPC["VPC / Subnets<br/><i>Networking module</i>"]
+        ECR["ECR<br/><i>Container Registry</i>"]
+        EC2["EC2<br/><i>Compute Instance</i>"]
+        S3["S3<br/><i>Artifact Storage</i>"]
+        IAM["IAM<br/><i>Roles & Policies</i>"]
+    end
+
+    subgraph PKG["📐 Packaging & Tooling"]
+        direction LR
+        UV["uv  <i>(Astral)</i><br/>Dependency management"]
+        PYPROJ["pyproject.toml<br/><i>PEP 621 · Hatchling</i>"]
+        DOCKER["Docker<br/><i>Container build</i>"]
+        RUFF["Ruff<br/><i>Lint & Format</i>"]
+    end
+
+    %% ── Data flows ──
+    RAW --> ING
+    META --> ING
+    ING --> VAL --> TRANS --> TRAIN
+
+    %% ── ML tool connections ──
+    TRANS -.-> SMILE
+    TRAIN -.-> SMOTE
+    TRAIN -.-> XGB
+    TRAIN -.-> OPTUNA
+    TRAIN -.-> SKLEARN
+
+    %% ── Artifacts ──
+    TRAIN --> MODEL
+    TRAIN --> PREPROC
+    TRAIN --> ENCODER
+
+    %% ── Serving ──
+    MODEL --> API
+    PREPROC --> API
+    ENCODER --> API
+    API --> PREDICT
+    API --> METRICS_EP
+
+    %% ── Monitoring ──
+    METRICS_EP --> PROM
+    PROM --> GRAF
+    EVID --> PROM
+    TRANS -.->|reference data| EVID
+
+    %% ── CI/CD ──
+    LINT --> BUILD --> DEPLOY
+    DRIFT_CRON -.-> EVID
+
+    %% ── Infrastructure ──
+    BUILD --> ECR
+    DEPLOY --> EC2
+    TRAIN --> S3
+    EC2 -.-> ECR
+    EC2 -.-> S3
+
+    %% ── Packaging ──
+    UV -.-> PYPROJ
+    PYPROJ -.-> DOCKER
+
+    %% ── Styling ──
+    classDef dataStyle fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+    classDef pipeStyle fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+    classDef mlStyle fill:#fff3e0,stroke:#e65100,color:#bf360c
+    classDef artifactStyle fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+    classDef serveStyle fill:#e0f7fa,stroke:#00838f,color:#006064
+    classDef monStyle fill:#fce4ec,stroke:#c62828,color:#b71c1c
+    classDef cicdStyle fill:#e8eaf6,stroke:#283593,color:#1a237e
+    classDef infraStyle fill:#fff8e1,stroke:#f57f17,color:#e65100
+    classDef pkgStyle fill:#f1f8e9,stroke:#558b2f,color:#33691e
+
+    class RAW,META dataStyle
+    class ING,VAL,TRANS,TRAIN pipeStyle
+    class SMILE,SMOTE,XGB,OPTUNA,SKLEARN mlStyle
+    class MODEL,PREPROC,ENCODER artifactStyle
+    class API,PREDICT,METRICS_EP serveStyle
+    class PROM,GRAF,EVID monStyle
+    class LINT,BUILD,DEPLOY,DRIFT_CRON cicdStyle
+    class VPC,ECR,EC2,S3,IAM infraStyle
+    class UV,PYPROJ,DOCKER,RUFF pkgStyle
+```
+
+---
+
 ## Quick Start
 
 ### Prerequisites
