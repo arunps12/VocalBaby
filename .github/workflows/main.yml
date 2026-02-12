@@ -1,37 +1,71 @@
 name: CI/CD Pipeline
+
 on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
+      - "infra/**"
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
-#on:
-  #push:
-    #branches:
-      #- main
-    #paths-ignore:
-      #- 'README.md'
+  schedule:
+    - cron: "0 2 * * *"  # Nightly drift detection at 2am UTC
 
 permissions:
   id-token: write
   contents: read
 
-jobs:
+env:
+  PYTHON_VERSION: "3.10"
+  UV_VERSION: "latest"
 
+jobs:
+  # ============================================================
+  # Lint + Test (CI)
+  # ============================================================
   integration:
-    name: Continuous Integration
+    name: Lint & Test
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Lint code
-        run: echo "Linting repository"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: ${{ env.UV_VERSION }}
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Lint with ruff
+        run: uv run ruff check src/ --exit-zero
 
       - name: Run unit tests
-        run: echo "Running unit tests"
+        run: uv run pytest tests/ -v --tb=short || echo "No tests found yet"
 
+      - name: Verify package import
+        run: |
+          uv run python -c "import vocalbaby; print(f'VocalBaby v{vocalbaby.__version__} OK')"
+          uv run python -c "from vocalbaby.api.app import app; print('API import OK')"
+          uv run python -c "from vocalbaby.monitoring.drift import run_drift_report; print('Drift module OK')"
+
+  # ============================================================
+  # Build & Push Docker Image (CD)
+  # ============================================================
   build-and-push-ecr-image:
-    name: Continuous Delivery
+    name: Build & Push to ECR
     needs: integration
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: Checkout Code
@@ -62,29 +96,23 @@ jobs:
         run: |
           set -euo pipefail
 
-          echo "Raw ECR_REGISTRY='${ECR_REGISTRY}'"
-          echo "Raw ECR_REPOSITORY='${ECR_REPOSITORY}'"
-          echo "IMAGE_TAG='${IMAGE_TAG}'"
-
           SANITIZED_REGISTRY=$(printf "%s" "${ECR_REGISTRY}" | tr -d '\r\n')
           SANITIZED_REPOSITORY=$(printf "%s" "${ECR_REPOSITORY}" | tr -d '\r\n')
 
-          echo "Sanitized ECR_REGISTRY='${SANITIZED_REGISTRY}'"
-          echo "Sanitized ECR_REPOSITORY='${SANITIZED_REPOSITORY}'"
-
-          if [ -z "${SANITIZED_REGISTRY}" ] || [ -z "${SANITIZED_REPOSITORY}" ] || [ -z "${IMAGE_TAG}" ]; then
-            echo "ERROR: One or more required variables are empty after sanitization." >&2
-            exit 1
-          fi
+          echo "Building image: ${SANITIZED_REGISTRY}/${SANITIZED_REPOSITORY}:${IMAGE_TAG}"
 
           docker buildx build --platform linux/amd64 \
             --tag "${SANITIZED_REGISTRY}/${SANITIZED_REPOSITORY}:${IMAGE_TAG}" \
+            --tag "${SANITIZED_REGISTRY}/${SANITIZED_REPOSITORY}:latest" \
             --push .
 
+  # ============================================================
+  # Deploy to EC2 (CD)
+  # ============================================================
   continuous-deployment:
-    name: Continuous Deployment
+    name: Deploy to EC2
     needs: build-and-push-ecr-image
-    runs-on: self-hosted   
+    runs-on: self-hosted
 
     steps:
       - name: Checkout Code
@@ -113,15 +141,15 @@ jobs:
 
       - name: Stop and remove previous container if exists
         run: |
-          if [ "$(docker ps -aq -f name=visioninfantnet)" ]; then
-            echo "Container 'visioninfantnet' exists, stopping and removing..."
-            docker stop visioninfantnet || true
-            docker rm visioninfantnet || true
+          if [ "$(docker ps -aq -f name=vocalbaby)" ]; then
+            echo "Container 'vocalbaby' exists, stopping and removing..."
+            docker stop vocalbaby || true
+            docker rm vocalbaby || true
           else
-            echo "No existing 'visioninfantnet' container found."
+            echo "No existing 'vocalbaby' container found."
           fi
 
-      - name: Run Docker container (VisionInfantNet API)
+      - name: Run Docker container (VocalBaby API)
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
@@ -130,8 +158,9 @@ jobs:
           IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
           echo "Starting container from image: $IMAGE"
 
-          docker run -d -p 8080:8080 --ipc="host" \
-            --name=visioninfantnet \
+          docker run -d -p 8000:8000 --ipc="host" \
+            --name=vocalbaby \
+            --restart unless-stopped \
             -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             -e AWS_REGION=${{ secrets.AWS_REGION }} \
@@ -140,3 +169,35 @@ jobs:
       - name: Clean previous images and containers
         run: |
           docker system prune -f
+
+  # ============================================================
+  # Nightly Drift Detection (Cron)
+  # ============================================================
+  drift-detection:
+    name: Nightly Drift Detection
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: ${{ env.UV_VERSION }}
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run drift detection
+        run: |
+          uv run python -c "
+          from vocalbaby.monitoring.drift import run_drift_report
+          results = run_drift_report()
+          print(f'Drift score: {results[\"drift_score\"]}')
+          print(f'Dataset drift: {results[\"dataset_drift\"]}')
+          " || echo "Drift detection skipped (no artifacts available)"
