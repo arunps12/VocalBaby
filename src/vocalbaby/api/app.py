@@ -2,26 +2,36 @@ import os
 import sys
 import shutil
 import tempfile
+import time
 import zipfile
 from typing import List, Optional
 
 import yaml
 from fastapi import FastAPI, File, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from starlette.responses import RedirectResponse
 from uvicorn import run as app_run
 
 from vocalbaby.exception.exception import VocalBabyException
 from vocalbaby.logging.logger import logging
+from vocalbaby.monitoring.metrics import (
+    REQUEST_COUNT,
+    REQUEST_LATENCY,
+    PREDICTION_ERRORS,
+    ACTIVE_PREDICTIONS,
+    get_metrics,
+    get_content_type,
+    set_model_info,
+)
 
-# Prediction 
+# Prediction
 from vocalbaby.pipeline.prediction_pipeline import PredictionPipeline
 
 
 app = FastAPI(
-    title="VisionInfantNet API (Prediction Only)",
-    description="Prediction API for VisionInfantNet (XGBoost on eGeMAPS). Training disabled.",
+    title="VocalBaby API (Prediction Only)",
+    description="Production prediction API for VocalBaby (XGBoost on eGeMAPS). Prometheus-monitored.",
     version="1.0.0",
 )
 
@@ -36,6 +46,43 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ----------------------------------------------------------------------
+# Prometheus Middleware
+# ----------------------------------------------------------------------
+@app.middleware("http")
+async def prometheus_middleware(request: Request, call_next):
+    """Track request count, latency, and errors via Prometheus."""
+    method = request.method
+    endpoint = request.url.path
+
+    # Skip metrics endpoint itself
+    if endpoint == "/metrics":
+        return await call_next(request)
+
+    start_time = time.time()
+    ACTIVE_PREDICTIONS.inc()
+
+    try:
+        response = await call_next(request)
+        duration = time.time() - start_time
+
+        REQUEST_COUNT.labels(
+            method=method, endpoint=endpoint, status=str(response.status_code)
+        ).inc()
+        REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(duration)
+
+        return response
+    except Exception as e:
+        duration = time.time() - start_time
+        REQUEST_COUNT.labels(method=method, endpoint=endpoint, status="500").inc()
+        REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(duration)
+        PREDICTION_ERRORS.labels(error_type=type(e).__name__).inc()
+        raise
+    finally:
+        ACTIVE_PREDICTIONS.dec()
+
 
 # ----------------------------------------------------------------------
 # Globals: final_model + cached predictor
@@ -123,6 +170,13 @@ async def index():
     return RedirectResponse(url="/docs")
 
 
+@app.get("/metrics", tags=["monitoring"])
+async def metrics():
+    """Expose Prometheus metrics."""
+    return Response(content=get_metrics(), media_type=get_content_type())
+
+
+
 @app.get("/health", tags=["health"])
 async def health():
     """
@@ -188,6 +242,7 @@ async def predict_route(
 
     except Exception as e:
         logging.exception("Error occurred in /predict endpoint.")
+        PREDICTION_ERRORS.labels(error_type=type(e).__name__).inc()
         raise VocalBabyException(e, sys)
 
 
@@ -250,18 +305,30 @@ async def predict_zip_route(
 
     except Exception as e:
         logging.exception("Error occurred in /predict_zip endpoint.")
+        PREDICTION_ERRORS.labels(error_type=type(e).__name__).inc()
         raise VocalBabyException(e, sys)
 
 
 # ----------------------------------------------------------------------
 # Entry point
 # ----------------------------------------------------------------------
-if __name__ == "__main__":
-    # Optional: eager-load predictor on startup so container fails fast if model missing
+@app.on_event("startup")
+async def startup_event():
+    """Initialize model info metrics on startup."""
+    try:
+        set_model_info(version="1.0.0", model_type="xgboost_egemaps_smote_optuna")
+        logging.info("Model info metrics set on startup.")
+    except Exception:
+        logging.warning("Could not set model info metrics on startup.")
+
     try:
         _ = _get_prediction_pipeline()
         logging.info("Model loaded successfully at startup.")
     except Exception:
-        logging.exception("Failed to load model at startup. Container will still start, but /predict will fail.")
+        logging.exception(
+            "Failed to load model at startup. Server will still start, but /predict will fail."
+        )
 
-    app_run(app, host="0.0.0.0", port=8080)
+
+if __name__ == "__main__":
+    app_run(app, host="0.0.0.0", port=8000)
