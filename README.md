@@ -85,7 +85,7 @@ It supports:
 ### 1️⃣ Import and initialize the pipeline
 
 ```python
-from visioninfantnet.pipeline.prediction_pipeline import PredictionPipeline
+from vocalbaby.pipeline.prediction_pipeline import PredictionPipeline
 
 MODEL_DIR = "final_model"   # Path containing the .pkl files
 

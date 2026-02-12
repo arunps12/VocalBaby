@@ -1,11 +1,11 @@
 import sys
 
-from visioninfantnet.components.data_ingestion import DataIngestion
-from visioninfantnet.components.data_validation import DataValidation
-from visioninfantnet.components.data_transformation import DataTransformation
-from visioninfantnet.components.model_trainer import ModelTrainer
+from vocalbaby.components.data_ingestion import DataIngestion
+from vocalbaby.components.data_validation import DataValidation
+from vocalbaby.components.data_transformation import DataTransformation
+from vocalbaby.components.model_trainer import ModelTrainer
 
-from visioninfantnet.entity.config_entity import (
+from vocalbaby.entity.config_entity import (
     TrainingPipelineConfig,
     DataIngestionConfig,
     DataValidationConfig,
@@ -13,8 +13,8 @@ from visioninfantnet.entity.config_entity import (
     ModelTrainerConfig,
 )
 
-from visioninfantnet.exception.exception import VisionInfantNetException
-from visioninfantnet.logging.logger import logging
+from vocalbaby.exception.exception import VocalBabyException
+from vocalbaby.logging.logger import logging
 
 
 if __name__ == "__main__":
@@ -102,4 +102,4 @@ if __name__ == "__main__":
 
     except Exception as e:
         logging.exception("Error occurred in VisionInfantNet pipeline.")
-        raise VisionInfantNetException(e, sys)
+        raise VocalBabyException(e, sys)
