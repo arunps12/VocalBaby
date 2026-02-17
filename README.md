@@ -513,133 +513,65 @@ Modify `params.yaml` and re-run `dvc repro` to update the pipeline.
 
 ## System Architecture & Workflow (Phase 2: Production)
 
-```mermaid
-flowchart TB
-    subgraph DATA["Data Layer"]
-        direction LR
-        RAW["Raw .wav Audio\nNaturalistic Recordings"]
-        META["Metadata CSV\nchild_ID, age, gender, Answer, corpus"]
-    end
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         DATA LAYER                                          │
+│   Raw .wav Audio  +  Metadata CSV (child_ID, age, gender, Answer, corpus)   │
+└────────────────────────────────┬─────────────────────────────────────────────┘
+                                 ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                     DVC PIPELINE (dvc repro)                                 │
+│                                                                              │
+│  1. Data Ingestion ──► 2. Validation ──► 3. Feature Extraction ──► 4. Train  │
+│  (train/valid/test)    (schema+drift)    (openSMILE eGeMAPS)      (XGBoost)  │
+└──────────┬──────────────────────────────────────────────────┬────────────────┘
+           │                                                  │
+           ▼                                                  ▼
+┌─────────────────────────┐                    ┌──────────────────────────────┐
+│   ML & FEATURE STACK    │                    │      MODEL ARTIFACTS         │
+│                         │                    │                              │
+│  • openSMILE (eGeMAPS)  │                    │  • xgb_egemaps_smote_optuna  │
+│  • SMOTE oversampling   │                    │  • preprocessing.pkl         │
+│  • XGBoost classifier   │                    │  • label_encoder.pkl         │
+│  • Optuna HPO           │                    │                              │
+│  • scikit-learn         │                    └──────────────┬───────────────┘
+└─────────────────────────┘                                   │
+                                                              ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          SERVING LAYER                                       │
+│                                                                              │
+│   FastAPI Server (port 8000)                                                 │
+│   ├── /predict        Classify .wav file(s)                                  │
+│   ├── /predict_zip    Classify ZIP of .wav files                             │
+│   └── /metrics        Prometheus metrics endpoint                            │
+└──────────────────────────────────┬───────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                        MONITORING STACK                                      │
+│                                                                              │
+│   Prometheus (scrape metrics) ──► Grafana (dashboards)                       │
+│   Evidently (data drift detection)                                           │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-    subgraph DVC_PIPELINE["DVC Pipeline (dvc repro)"]
-        direction TB
-        ING["1 - Data Ingestion\nTrain / Valid / Test split"]
-        VAL["2 - Data Validation\nSchema check, Drift guard"]
-        TRANS["3 - Feature Extraction\nopenSMILE eGeMAPS"]
-        TRAIN["4 - Model Training\nSMOTE, XGBoost, Optuna"]
-    end
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                     CI/CD (GitHub Actions)                                    │
+│                                                                              │
+│   Lint & Test ──► Build & Push (Docker → ECR) ──► Deploy (EC2)               │
+│   Nightly Drift (cron) ──► Evidently                                         │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-    subgraph ML_TOOLS["ML and Feature Stack"]
-        direction LR
-        SMILE["openSMILE\neGeMAPS features"]
-        SMOTE["imbalanced-learn\nSMOTE oversampling"]
-        XGB["XGBoost\nClassifier"]
-        OPTUNA["Optuna\nHyperparameter tuning"]
-        SKLEARN["scikit-learn\nPreprocessing, Metrics"]
-    end
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                   AWS INFRASTRUCTURE (Terraform)                             │
+│                                                                              │
+│   VPC / Subnets  │  ECR (Registry)  │  EC2 (Compute)  │  S3  │  IAM         │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-    subgraph ARTIFACTS["Model Artifacts"]
-        direction LR
-        MODEL["xgb_egemaps_smote_optuna.pkl"]
-        PREPROC["preprocessing.pkl"]
-        ENCODER["label_encoder.pkl"]
-    end
-
-    subgraph SERVING["Serving Layer"]
-        direction TB
-        API["FastAPI Server\nvocalbaby-serve, port 8000"]
-        PREDICT["Prediction Pipeline\n/predict, /predict_zip"]
-        METRICS_EP["/metrics endpoint"]
-    end
-
-    subgraph MONITORING["Monitoring Stack"]
-        direction LR
-        PROM["Prometheus\nScrape metrics, Alerts"]
-        GRAF["Grafana\nDashboards, Visualization"]
-        EVID["Evidently\nData Drift Detection"]
-    end
-
-    subgraph CICD["CI/CD (GitHub Actions)"]
-        direction TB
-        LINT["Lint and Test\nRuff, pytest"]
-        BUILD["Build and Push\nDocker to ECR"]
-        DEPLOY["Deploy\nEC2 pull and restart"]
-        DRIFT_CRON["Nightly Drift\nScheduled cron job"]
-    end
-
-    subgraph INFRA["AWS Infrastructure (Terraform)"]
-        direction LR
-        VPC["VPC / Subnets\nNetworking module"]
-        ECR["ECR\nContainer Registry"]
-        EC2["EC2\nCompute Instance"]
-        S3["S3\nArtifact Storage"]
-        IAM["IAM\nRoles and Policies"]
-    end
-
-    subgraph PKG["Packaging and Tooling"]
-        direction LR
-        UV["uv (Astral)\nDependency management"]
-        PYPROJ["pyproject.toml\nPEP 621, Hatchling"]
-        DOCKER["Docker\nContainer build"]
-        RUFF["Ruff\nLint and Format"]
-    end
-
-    RAW --> ING
-    META --> ING
-    ING --> VAL --> TRANS --> TRAIN
-
-    TRANS -.-> SMILE
-    TRAIN -.-> SMOTE
-    TRAIN -.-> XGB
-    TRAIN -.-> OPTUNA
-    TRAIN -.-> SKLEARN
-
-    TRAIN --> MODEL
-    TRAIN --> PREPROC
-    TRAIN --> ENCODER
-
-    MODEL --> API
-    PREPROC --> API
-    ENCODER --> API
-    API --> PREDICT
-    API --> METRICS_EP
-
-    METRICS_EP --> PROM
-    PROM --> GRAF
-    EVID --> PROM
-    TRANS -.->|reference data| EVID
-
-    LINT --> BUILD --> DEPLOY
-    DRIFT_CRON -.-> EVID
-
-    BUILD --> ECR
-    DEPLOY --> EC2
-    TRAIN --> S3
-    EC2 -.-> ECR
-    EC2 -.-> S3
-
-    UV -.-> PYPROJ
-    PYPROJ -.-> DOCKER
-
-    classDef dataStyle fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
-    classDef pipeStyle fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
-    classDef mlStyle fill:#fff3e0,stroke:#e65100,color:#bf360c
-    classDef artifactStyle fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
-    classDef serveStyle fill:#e0f7fa,stroke:#00838f,color:#006064
-    classDef monStyle fill:#fce4ec,stroke:#c62828,color:#b71c1c
-    classDef cicdStyle fill:#e8eaf6,stroke:#283593,color:#1a237e
-    classDef infraStyle fill:#fff8e1,stroke:#f57f17,color:#e65100
-    classDef pkgStyle fill:#f1f8e9,stroke:#558b2f,color:#33691e
-
-    class RAW,META dataStyle
-    class ING,VAL,TRANS,TRAIN pipeStyle
-    class SMILE,SMOTE,XGB,OPTUNA,SKLEARN mlStyle
-    class MODEL,PREPROC,ENCODER artifactStyle
-    class API,PREDICT,METRICS_EP serveStyle
-    class PROM,GRAF,EVID monStyle
-    class LINT,BUILD,DEPLOY,DRIFT_CRON cicdStyle
-    class VPC,ECR,EC2,S3,IAM infraStyle
-    class UV,PYPROJ,DOCKER,RUFF pkgStyle
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                      PACKAGING & TOOLING                                     │
+│                                                                              │
+│   uv (Astral)  │  pyproject.toml (PEP 621)  │  Docker  │  Ruff              │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
