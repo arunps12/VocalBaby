@@ -4,7 +4,9 @@ Data ingestion module - wrapper around existing DataIngestion component.
 This module provides a functional interface to the existing data ingestion pipeline
 while maintaining backwards compatibility.
 """
+import os
 import sys
+from pathlib import Path
 from typing import Tuple
 import pandas as pd
 
@@ -16,6 +18,25 @@ from vocalbaby.entity.config_entity import (
 from vocalbaby.entity.artifact_entity import DataIngestionArtifact
 from vocalbaby.logging.logger import logging
 from vocalbaby.exception.exception import VocalBabyException
+
+
+def _update_latest_symlink(artifact_dir: str) -> None:
+    """
+    Create/update artifacts/latest symlink pointing to the timestamped run directory.
+    
+    This ensures DVC can always find outputs at artifacts/latest/ while
+    actual data lives in artifacts/<timestamp>/.
+    """
+    artifact_path = Path(artifact_dir)
+    latest_link = artifact_path.parent / "latest"
+    
+    # Remove existing symlink or directory
+    if latest_link.is_symlink():
+        latest_link.unlink()
+    
+    # Create symlink: artifacts/latest -> artifacts/<timestamp>
+    latest_link.symlink_to(artifact_path.name)
+    logging.info(f"Updated symlink: {latest_link} -> {artifact_path.name}")
 
 
 def run_data_ingestion() -> DataIngestionArtifact:
@@ -56,6 +77,10 @@ def run_data_ingestion() -> DataIngestionArtifact:
         logging.info(f"Train audio dir: {artifact.train_audio_dir}")
         logging.info(f"Valid audio dir: {artifact.valid_audio_dir}")
         logging.info(f"Test audio dir: {artifact.test_audio_dir}")
+        
+        # Update artifacts/latest symlink to point to this run
+        _update_latest_symlink(pipeline_config.artifact_dir)
+        
         logging.info("=" * 80)
         
         return artifact

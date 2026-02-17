@@ -2,15 +2,35 @@
 STAGE 02: DATA VALIDATION
 
 Validates schema, checks data quality, detects drift.
+DVC ensures stage_01 (ingest) has already completed.
 """
 import sys
-import argparse
 import os
+import argparse
 
-from vocalbaby.data.ingest import run_data_ingestion
 from vocalbaby.data.validate import run_data_validation
+from vocalbaby.entity.artifact_entity import DataIngestionArtifact
 from vocalbaby.logging.logger import logging
 from vocalbaby.exception.exception import VocalBabyException
+
+
+def _load_ingestion_artifact() -> DataIngestionArtifact:
+    """
+    Reconstruct DataIngestionArtifact from artifacts/latest/data_ingestion.
+    DVC guarantees the ingest stage has already run.
+    """
+    base = os.path.join("artifacts", "latest", "data_ingestion")
+    meta_dir = os.path.join(base, "ingested_metadata")
+    audio_dir = os.path.join(base, "ingested_audio")
+
+    return DataIngestionArtifact(
+        train_metadata_path=os.path.join(meta_dir, "train.csv"),
+        valid_metadata_path=os.path.join(meta_dir, "valid.csv"),
+        test_metadata_path=os.path.join(meta_dir, "test.csv"),
+        train_audio_dir=os.path.join(audio_dir, "train"),
+        valid_audio_dir=os.path.join(audio_dir, "valid"),
+        test_audio_dir=os.path.join(audio_dir, "test"),
+    )
 
 
 def main():
@@ -18,25 +38,16 @@ def main():
     parser = argparse.ArgumentParser(description="VocalBaby Pipeline - Stage 02: Data Validation")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     args = parser.parse_args()
-    
+
     try:
         logging.info("Starting Stage 02: Data Validation")
-        
-        # Check if ingestion artifacts exist, otherwise run ingestion first
-        latest_link = "artifacts/latest"
-        if not os.path.exists(latest_link):
-            logging.info("No ingestion artifacts found - running ingestion first...")
-            ingestion_artifact = run_data_ingestion()
-        else:
-            # Load existing ingestion artifact
-            from vocalbaby.entity.artifact_entity import DataIngestionArtifact
-            ingestion_artifact = run_data_ingestion()  # Re-run to get artifact object
-        
-        # Run validation
+
+        ingestion_artifact = _load_ingestion_artifact()
+
         validation_artifact = run_data_validation(ingestion_artifact)
-        logging.info(f"Stage 02 completed: {validation_artifact.artifact_dir}")
+        logging.info(f"Stage 02 completed: report={validation_artifact.report_file_path}")
         return 0
-        
+
     except Exception as e:
         logging.error(f"Stage 02 failed: {e}")
         raise VocalBabyException(e, sys)

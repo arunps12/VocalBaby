@@ -54,7 +54,7 @@ def run_data_validation(ingestion_artifact: DataIngestionArtifact) -> DataValida
         artifact = validation.initiate_data_validation()
         
         logging.info(f"Data validation completed successfully")
-        logging.info(f"Validation report: {artifact.validation_report_file_path}")
+        logging.info(f"Validation report: {artifact.report_file_path}")
         logging.info(f"Drift report: {artifact.drift_report_file_path}")
         logging.info(f"Valid status: {artifact.validation_status}")
         logging.info("=" * 80)
