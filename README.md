@@ -1,4 +1,4 @@
-# VocalBaby — Production ML System for Infant Vocalization Classification
+# VocalBaby — Feature Comparison Pipeline for Infant Vocalization Classification
 
 [![Python](https://img.shields.io/badge/Python-3.10-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![uv](https://img.shields.io/badge/uv-Astral-DE5FE9?logo=astral&logoColor=white)](https://docs.astral.sh/uv/)
@@ -18,7 +18,28 @@
 [![Ruff](https://img.shields.io/badge/Ruff-Linter-D7FF64?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A production-grade audio classification system for classifying infant vocalizations — including **canonical babbling**, **non-canonical vocalizations**, **crying**, **laughing**, and **junk/noise** — using XGBoost models and eGeMAPS acoustic features, with full MLOps pipeline including DVC versioning, Prometheus monitoring, Grafana dashboards, Evidently drift detection, and Terraform infrastructure.
+**A reproducible ML pipeline for comparing XGBoost model performance across multiple acoustic feature sets for infant vocalization classification.**
+
+---
+
+## Project Purpose
+
+This project provides a **clean, reproducible pipeline** to:
+
+1. **Compare XGBoost performance** across 4 acoustic feature sets:
+   - **eGeMAPS** (88-dim openSMILE features)
+   - **MFCC** (20/40-dim librosa features)
+   - **HuBERT SSL** (768-dim embeddings from [arunps/hubert-home-hindibabynet-ssl](https://huggingface.co/arunps/hubert-home-hindibabynet-ssl))
+   - **Wav2Vec2 SSL** (768-dim embeddings from [arunps/wav2vec2-home-hindibabynet-ssl](https://huggingface.co/arunps/wav2vec2-home-hindibabynet-ssl))
+
+2. **Find optimal hyperparameters** for each feature set independently using Optuna (40 trials, multi-objective: UAR + F1)
+
+3. **Generate comprehensive evaluation artifacts**:
+   - Confusion matrices for **both validation and test** splits
+   - Classification reports with per-class metrics
+   - Aggregated comparison table across all feature sets
+
+4. **Maintain full reproducibility** via DVC pipeline and `params.yaml` configuration
 
 ---
 
@@ -34,20 +55,415 @@ A production-grade audio classification system for classifying infant vocalizati
 | **Crying** | Infant cry episodes | 823 |
 | **Laughing** | Infant laughter | 241 |
 
-The system focuses on infant and adult vocalizations in naturalistic interaction recordings and combines:
+The system focuses on infant and adult vocalizations in naturalistic interaction recordings.
 
-- **eGeMAPS acoustic feature extraction** (via openSMILE)
-- **SMOTE oversampling** for class imbalance
-- **XGBoost classification** tuned with Optuna
-- **FastAPI prediction server** with Prometheus instrumentation
-- **DVC pipeline** for reproducible training
-- **Evidently drift detection** for production monitoring
-- **Terraform IaC** for AWS deployment (ECR, EC2, S3)
-- **GitHub Actions CI/CD** with `uv` (Astral)
+---
 
-All intermediate pipeline artifacts and final trained models are versioned and stored in **Amazon S3**. The system is containerized with **Docker** and deployed to **AWS EC2** via **GitHub Actions**.
+## Quick Start
 
-> **Training setup:** The current model is trained mostly on short audio segments of about **400 ms**, so the prediction pipeline supports both **whole-file** and **chunk-based** inference.
+### Prerequisites
+
+- Python 3.10+
+- [uv](https://docs.astral.sh/uv/) package manager (recommended) or pip
+- DVC (for pipeline orchestration)
+- Git (for version control)
+
+### Installation
+
+```bash
+# Clone repository
+git clone https://github.com/your-username/VisionInfantNet.git
+cd VisionInfantNet
+
+# Create virtual environment and install dependencies (using uv)
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install -e .
+
+# Or using pip
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+### Running the Pipeline
+
+#### Option 1: DVC Pipeline (Recommended)
+
+Run the entire 7-stage pipeline with DVC:
+
+```bash
+# Run complete pipeline (all 7 stages)
+dvc repro
+
+# Run specific stage and its dependencies
+dvc repro ingest      # Stage 01: Data ingestion only
+dvc repro validate    # Stages 01-02: Through validation
+dvc repro evaluate    # Stages 01-06: Through evaluation
+dvc repro aggregate   # Full pipeline: All 7 stages
+```
+
+#### Option 2: Manual Stage Execution
+
+Run individual stages via bash scripts:
+
+```bash
+# Stage 01: Data Ingestion
+bash scripts/01_ingest.sh
+
+# Stage 02: Data Validation
+bash scripts/02_validate.sh
+
+# Stage 03: Feature Extraction (all feature sets from params.yaml)
+bash scripts/03_transform.sh
+
+# Or extract specific feature set(s)
+bash scripts/03_transform.sh --feature-sets mfcc
+
+# Stage 04: Hyperparameter Tuning
+bash scripts/04_tune.sh
+
+# Or tune specific feature set(s) with custom trial count
+bash scripts/04_tune.sh --feature-sets egemaps mfcc --n-trials 20
+
+# Stage 05: Model Training
+bash scripts/05_train.sh
+
+# Stage 06: Model Evaluation
+bash scripts/06_evaluate.sh
+
+# Stage 07: Results Aggregation
+bash scripts/07_aggregate.sh
+```
+
+#### Option 3: Python Module Execution
+
+Run stages directly as Python modules:
+
+```bash
+python -m vocalbaby.pipeline.stage_01_ingest
+python -m vocalbaby.pipeline.stage_02_validate
+python -m vocalbaby.pipeline.stage_03_transform --feature-sets mfcc --force
+python -m vocalbaby.pipeline.stage_04_tune --n-trials 10
+python -m vocalbaby.pipeline.stage_05_train
+python -m vocalbaby.pipeline.stage_06_evaluate
+python -m vocalbaby.pipeline.stage_07_aggregate
+```
+
+---
+
+## Pipeline Architecture
+
+### 7-Stage ML Pipeline
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  STAGE 01: DATA INGESTION                                       │
+│  • Loads raw audio + metadata                                   │
+│  • Creates child-disjoint train/valid/test splits               │
+│  Output: artifacts/latest/data_ingestion/                       │
+└───────────────────────┬─────────────────────────────────────────┘
+                        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  STAGE 02: DATA VALIDATION                                      │
+│  • Schema validation                                            │
+│  • Data quality checks                                          │
+│  • Drift detection                                              │
+│  Output: artifacts/latest/data_validation/                      │
+└───────────────────────┬─────────────────────────────────────────┘
+                        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  STAGE 03: FEATURE EXTRACTION                                   │
+│  • eGeMAPS (88-dim openSMILE)                                   │
+│  • MFCC (20/40-dim librosa)                                     │
+│  • HuBERT SSL (768-dim transformers)                            │
+│  • Wav2Vec2 SSL (768-dim transformers)                          │
+│  Output: artifacts/features/<feature_set>/<split>/              │
+└───────────────────────┬─────────────────────────────────────────┘
+                        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  STAGE 04: HYPERPARAMETER TUNING                                │
+│  • Optuna optimization (40 trials)                              │
+│  • Multi-objective: UAR + Macro F1                              │
+│  • Independent tuning per feature set                           │
+│  Output: artifacts/models/<feature_set>/best_params.json        │
+└───────────────────────┬─────────────────────────────────────────┘
+                        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  STAGE 05: MODEL TRAINING                                       │
+│  • XGBoost training with best params                            │
+│  • SMOTE oversampling (k=5, random_state=42)                    │
+│  • Label encoding + median imputation                           │
+│  Output: artifacts/models/<feature_set>/xgb_model.pkl           │
+└───────────────────────┬─────────────────────────────────────────┘
+                        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  STAGE 06: MODEL EVALUATION                                     │
+│  • Evaluation on valid + test splits                            │
+│  • Confusion matrices (PNG + CSV)                               │
+│  • Classification reports                                       │
+│  • Metrics: Accuracy, UAR, F1, Precision, Recall                │
+│  Output: artifacts/eval/<feature_set>/                          │
+└───────────────────────┬─────────────────────────────────────────┘
+                        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  STAGE 07: RESULTS AGGREGATION                                  │
+│  • Comparison table across all feature sets                     │
+│  • Metrics for both valid and test splits                       │
+│  Output: artifacts/results/results_summary.csv                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Feature Sets
+
+| Feature Set | Dimension | Extractor | Description |
+|-------------|-----------|-----------|-------------|
+| **egemaps** | 88 | openSMILE | Extended Geneva Minimalistic Acoustic Parameter Set |
+| **mfcc** | 40 | librosa | Mel-Frequency Cepstral Coefficients (mean+std pooling) |
+| **hubert_ssl** | 768 | HuggingFace Transformers | HuBERT SSL embeddings from [arunps/hubert-home-hindibabynet-ssl](https://huggingface.co/arunps/hubert-home-hindibabynet-ssl) |
+| **wav2vec2_ssl** | 768 | HuggingFace Transformers | Wav2Vec2 SSL embeddings from [arunps/wav2vec2-home-hindibabynet-ssl](https://huggingface.co/arunps/wav2vec2-home-hindibabynet-ssl) |
+
+#### Self-Supervised Learning (SSL) Models
+
+The **HuBERT** and **Wav2Vec2** models used in this pipeline are **custom fine-tuned versions** trained on infant vocalization data:
+
+- **[arunps/hubert-home-hindibabynet-ssl](https://huggingface.co/arunps/hubert-home-hindibabynet-ssl)** - HuBERT model fine-tuned on home environment infant speech recordings from the HindiBabyNet corpus. This model is specifically adapted for infant vocalization patterns and home recording conditions.
+
+- **[arunps/wav2vec2-home-hindibabynet-ssl](https://huggingface.co/arunps/wav2vec2-home-hindibabynet-ssl)** - Wav2Vec2 model fine-tuned on the same infant speech data. It provides complementary self-supervised representations optimized for infant cry and babbling classification.
+
+**Why SSL models?** Self-supervised learning models pre-trained on large speech corpora and fine-tuned on domain-specific data (infant vocalizations) often capture richer acoustic-phonetic representations than traditional hand-crafted features. These 768-dimensional embeddings encode temporal dynamics, prosodic patterns, and spectral characteristics that are particularly useful for distinguishing between canonical babbling, non-canonical vocalizations, crying, and laughing.
+
+**Model Architecture:**
+- Base architecture: HuBERT-base / Wav2Vec2-base (12 transformer layers)
+- Hidden size: 768 dimensions
+- Fine-tuning: Infant vocalization data from naturalistic home recordings
+- Inference: Mean-pooled temporal embeddings (768-dim fixed-length vectors)
+
+---
+
+## Project Structure
+
+```
+.
+├── params.yaml                    # Central configuration file
+├── dvc.yaml                       # DVC pipeline definition
+├── pyproject.toml                 # Package metadata & dependencies
+├── README.md                      # This file
+│
+├── data/                          # Raw data (not versioned)
+│   ├── audio/raw/                 # Raw .wav files
+│   └── metadata/                  # Metadata CSV files
+│
+├── data_schema/                   # Data validation schemas
+│   └── schema.yaml
+│
+├── scripts/                       # Bash runner scripts
+│   ├── 01_ingest.sh              # Stage 01: Data ingestion
+│   ├── 02_validate.sh            # Stage 02: Data validation
+│   ├── 03_transform.sh           # Stage 03: Feature extraction
+│   ├── 04_tune.sh                # Stage 04: Hyperparameter tuning
+│   ├── 05_train.sh               # Stage 05: Model training
+│   ├── 06_evaluate.sh            # Stage 06: Model evaluation
+│   └── 07_aggregate.sh           # Stage 07: Results aggregation
+│
+├── src/vocalbaby/                 # Main package (src-layout)
+│   ├── config/                    # Configuration management
+│   │   └── schemas.py
+│   ├── data/                      # Data ingestion & validation
+│   │   ├── ingest.py
+│   │   └── validate.py
+│   ├── features/                  # Feature extractors
+│   │   ├── base.py
+│   │   ├── egemaps.py
+│   │   ├── mfcc.py
+│   │   ├── hubert.py
+│   │   └── wav2vec2.py
+│   ├── models/                    # Hyperparameter tuning & training
+│   ├── eval/                      # Evaluation & metrics
+│   ├── pipeline/                  # 7 pipeline stage modules
+│   │   ├── stage_01_ingest.py
+│   │   ├── stage_02_validate.py
+│   │   ├── stage_03_transform.py
+│   │   ├── stage_04_tune.py
+│   │   ├── stage_05_train.py
+│   │   ├── stage_06_evaluate.py
+│   │   └── stage_07_aggregate.py
+│   ├── components/                # Legacy components (kept for compatibility)
+│   ├── utils/                     # Utility functions
+│   ├── logging/                   # Logging configuration
+│   ├── exception/                 # Exception handling
+│   └── cli.py                     # Command-line interface
+│
+├── artifacts/                     # Pipeline outputs (DVC-tracked)
+│   ├── data/                      # Ingested + validated data
+│   ├── features/                  # Feature arrays
+│   │   └── <feature_set>/
+│   │       ├── train/
+│   │       ├── valid/
+│   │       └── test/
+│   ├── models/                    # Trained models
+│   │   └── <feature_set>/
+│   │       ├── xgb_model.pkl
+│   │       ├── best_params.json
+│   │       ├── label_encoder.pkl
+│   │       └── imputer.pkl
+│   ├── eval/                      # Evaluation results
+│   │   └── <feature_set>/
+│   │       ├── confusion_matrix_valid.png
+│   │       ├── confusion_matrix_test.png
+│   │       ├── metrics_valid.json
+│   │       └── metrics_test.json
+│   └── results/                   # Aggregated results
+│       └── results_summary.csv    # Main comparison table
+│
+├── notebooks/                     # Exploratory notebooks (not part of pipeline)
+│   ├── 01_EDA.ipynb
+│   ├── 02__feature_and_model_selection_experiments.ipynb
+│   ├── ...
+│   └── 06__xgboost_egemaps_smote_optuna_experiment.ipynb
+│
+└── tests/                         # Unit tests
+```
+
+---
+
+## Configuration
+
+All pipeline parameters are centralized in [`params.yaml`](params.yaml). Key sections:
+
+### Data Configuration
+```yaml
+data:
+  raw_audio_dir: data/audio/raw
+  raw_metadata_file: data/metadata/private_metadata.csv
+  seed: 42
+```
+
+### Feature Sets
+```yaml
+features:
+  sets:
+    - egemaps
+    - mfcc
+    - hubert_ssl
+    - wav2vec2_ssl
+  
+  mfcc:
+    n_mfcc: 20
+    sample_rate: 16000
+    pool: mean_std  # 40-dim output (mean+std)
+```
+
+### Hyperparameter Tuning
+```yaml
+tuning:
+  framework: optuna
+  n_trials: 40
+  objectives:
+    - uar        # Unweighted Average Recall
+    - macro_f1   # Macro F1-score
+  
+  xgb_search_space:
+    max_depth: [3, 10]
+    learning_rate: [0.001, 0.3]
+    n_estimators: [100, 500]
+    # ... more parameters
+```
+
+### Evaluation
+```yaml
+evaluation:
+  metrics:
+    - accuracy
+    - balanced_accuracy  # UAR
+    - macro_f1
+    - weighted_f1
+  
+  confusion_matrix:
+    normalize: false
+    save_csv: true
+    save_png: true
+```
+
+Modify `params.yaml` and re-run `dvc repro` to update the pipeline.
+
+---
+
+## Results & Artifacts
+
+### Key Output Files
+
+1. **`artifacts/results/results_summary.csv`** - Main comparison table
+   ```csv
+   feature_set,split,n_samples,accuracy,balanced_accuracy,macro_f1,...
+   egemaps,test,1000,0.82,0.78,0.75,...
+   mfcc,test,1000,0.79,0.75,0.72,...
+   hubert_ssl,test,1000,0.84,0.81,0.78,...
+   wav2vec2_ssl,test,1000,0.85,0.82,0.79,...
+   ```
+
+2. **Confusion Matrices** - PNG + CSV for each feature set × split
+   - `artifacts/eval/egemaps/confusion_matrix_valid.png`
+   - `artifacts/eval/egemaps/confusion_matrix_test.png`
+   - ... (same for mfcc, hubert_ssl, wav2vec2_ssl)
+
+3. **Best Hyperparameters** - JSON for each feature set
+   - `artifacts/models/egemaps/best_params.json`
+   - `artifacts/models/mfcc/best_params.json`
+   - ... etc
+
+4. **Trained Models** - Pickled XGBoost models
+   - `artifacts/models/<feature_set>/xgb_model.pkl`
+   - `artifacts/models/<feature_set>/label_encoder.pkl`
+   - `artifacts/models/<feature_set>/imputer.pkl`
+
+### Viewing Results
+
+```bash
+# View aggregated comparison table
+cat artifacts/results/results_summary.csv
+
+# View confusion matrices (if on remote server, use scp/rsync to download)
+open artifacts/eval/egemaps/confusion_matrix_test.png
+
+# View best hyperparameters
+cat artifacts/models/egemaps/best_params.json | python -m json.tool
+
+# View evaluation metrics
+cat artifacts/eval/egemaps/metrics_test.json | python -m json.tool
+```
+
+---
+
+## Methodology
+
+### Data Preprocessing
+
+1. **Child-Disjoint Splits** - Train/valid/test splits ensure no child appears in multiple splits
+2. **Label Encoding** - Categorical labels converted to integers (0-4)
+3. **Missing Value Imputation** - Median imputation for any missing features
+4. **Class Imbalance Handling** - SMOTE oversampling (k=5) applied to training set only
+
+### Hyperparameter Optimization
+
+- **Framework**: Optuna with TPESampler
+- **Trials**: 40 per feature set
+- **Objectives**: Unweighted Average Recall (UAR) + Macro F1-score
+- **Search Space**: Independent for each feature set (see `params.yaml`)
+- **Validation**: Best params selected based on validation set performance
+
+### Model Training
+
+- **Algorithm**: XGBoost (multi:softmax objective)
+- **Early Stopping**: 50 rounds on validation set
+- **Random State**: 42 (for reproducibility)
+- **Preprocessing**: Applied consistently (imputation → SMOTE → label encoding)
+
+### Evaluation
+
+- **Splits**: Both validation and test (ensures no overfitting)
+- **Metrics**: Accuracy, Balanced Accuracy (UAR), Macro/Weighted F1, Precision, Recall
+- **Confusion Matrices**: Raw counts (not normalized) saved as PNG + CSV
 
 ---
 
@@ -55,13 +471,13 @@ All intermediate pipeline artifacts and final trained models are versioned and s
 
 ```mermaid
 flowchart TB
-    subgraph DATA["🎤 Data Layer"]
+    subgraph DATA["Data Layer"]
         direction LR
         RAW["Raw .wav Audio<br/><i>Naturalistic Recordings</i>"]
         META["Metadata CSV<br/><i>child_ID · age · gender · Answer · corpus</i>"]
     end
 
-    subgraph DVC_PIPELINE["⚙️ DVC Pipeline  <i>(dvc repro)</i>"]
+    subgraph DVC_PIPELINE["DVC Pipeline  <i>(dvc repro)</i>"]
         direction TB
         ING["<b>1 — Data Ingestion</b><br/>Train / Valid / Test split"]
         VAL["<b>2 — Data Validation</b><br/>Schema check · Drift guard"]
@@ -69,7 +485,7 @@ flowchart TB
         TRAIN["<b>4 — Model Training</b><br/>SMOTE · XGBoost · Optuna"]
     end
 
-    subgraph ML_TOOLS["🧠 ML & Feature Stack"]
+    subgraph ML_TOOLS["ML & Feature Stack"]
         direction LR
         SMILE["openSMILE<br/><i>eGeMAPS features</i>"]
         SMOTE["imbalanced-learn<br/><i>SMOTE oversampling</i>"]
@@ -78,28 +494,28 @@ flowchart TB
         SKLEARN["scikit-learn<br/><i>Preprocessing · Metrics</i>"]
     end
 
-    subgraph ARTIFACTS["📦 Model Artifacts"]
+    subgraph ARTIFACTS["Model Artifacts"]
         direction LR
         MODEL["xgb_egemaps_smote_optuna.pkl"]
         PREPROC["preprocessing.pkl"]
         ENCODER["label_encoder.pkl"]
     end
 
-    subgraph SERVING["🚀 Serving Layer"]
+    subgraph SERVING["Serving Layer"]
         direction TB
         API["<b>FastAPI Server</b><br/><i>vocalbaby-serve · port 8000</i>"]
         PREDICT["Prediction Pipeline<br/><i>/predict · /predict_zip</i>"]
         METRICS_EP["/metrics endpoint"]
     end
 
-    subgraph MONITORING["📊 Monitoring Stack"]
+    subgraph MONITORING["Monitoring Stack"]
         direction LR
         PROM["Prometheus<br/><i>Scrape metrics · Alerts</i>"]
         GRAF["Grafana<br/><i>Dashboards · Visualization</i>"]
         EVID["Evidently<br/><i>Data Drift Detection</i>"]
     end
 
-    subgraph CICD["🔄 CI/CD  <i>(GitHub Actions)</i>"]
+    subgraph CICD["CI/CD  <i>(GitHub Actions)</i>"]
         direction TB
         LINT["<b>Lint & Test</b><br/>Ruff · pytest"]
         BUILD["<b>Build & Push</b><br/>Docker → ECR"]
@@ -107,7 +523,7 @@ flowchart TB
         DRIFT_CRON["<b>Nightly Drift</b><br/>Scheduled cron job"]
     end
 
-    subgraph INFRA["☁️ AWS Infrastructure  <i>(Terraform)</i>"]
+    subgraph INFRA["AWS Infrastructure  <i>(Terraform)</i>"]
         direction LR
         VPC["VPC / Subnets<br/><i>Networking module</i>"]
         ECR["ECR<br/><i>Container Registry</i>"]
@@ -116,7 +532,7 @@ flowchart TB
         IAM["IAM<br/><i>Roles & Policies</i>"]
     end
 
-    subgraph PKG["📐 Packaging & Tooling"]
+    subgraph PKG["Packaging & Tooling"]
         direction LR
         UV["uv  <i>(Astral)</i><br/>Dependency management"]
         PYPROJ["pyproject.toml<br/><i>PEP 621 · Hatchling</i>"]
