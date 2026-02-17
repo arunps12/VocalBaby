@@ -48,7 +48,7 @@ def run_data_validation(ingestion_artifact: DataIngestionArtifact) -> DataValida
         
         # Run validation
         logging.info("Initializing data validation component...")
-        validation = DataValidation(ingestion_artifact, validation_config)
+        validation = DataValidation(validation_config, ingestion_artifact)
         
         logging.info("Starting data validation...")
         artifact = validation.initiate_data_validation()
