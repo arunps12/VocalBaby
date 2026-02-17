@@ -3,7 +3,10 @@ Data validation module - wrapper around existing DataValidation component.
 
 This module provides a functional interface to the existing data validation pipeline.
 """
+import os
 import sys
+from datetime import datetime
+from pathlib import Path
 
 from vocalbaby.components.data_validation import DataValidation
 from vocalbaby.entity.config_entity import (
@@ -16,6 +19,19 @@ from vocalbaby.entity.artifact_entity import (
 )
 from vocalbaby.logging.logger import logging
 from vocalbaby.exception.exception import VocalBabyException
+
+
+def _get_latest_timestamp() -> datetime:
+    """
+    Resolve artifacts/latest symlink to recover the run timestamp,
+    so validation writes into the same artifact directory as ingestion.
+    """
+    latest = Path("artifacts/latest")
+    if latest.is_symlink():
+        ts_str = os.readlink(str(latest))  # e.g. "02_17_2026_10_29_46"
+        return datetime.strptime(ts_str, "%m_%d_%Y_%H_%M_%S")
+    # Fallback: current time
+    return datetime.now()
 
 
 def run_data_validation(ingestion_artifact: DataIngestionArtifact) -> DataValidationArtifact:
@@ -42,8 +58,8 @@ def run_data_validation(ingestion_artifact: DataIngestionArtifact) -> DataValida
         logging.info("STAGE 02: DATA VALIDATION")
         logging.info("=" * 80)
         
-        # Initialize configs
-        pipeline_config = TrainingPipelineConfig()
+        # Initialize configs - reuse the ingestion run's timestamp
+        pipeline_config = TrainingPipelineConfig(timestamp=_get_latest_timestamp())
         validation_config = DataValidationConfig(pipeline_config)
         
         # Run validation
