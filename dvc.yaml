@@ -71,7 +71,7 @@ stages:
       - features.hubert_ssl
       - features.wav2vec2_ssl
     outs:
-      - artifacts/features:
+      - artifacts/latest/features:
           cache: true
 
   # ---------------------------------------------------------------------------
@@ -81,7 +81,7 @@ stages:
   tune:
     cmd: bash scripts/04_tune.sh
     deps:
-      - artifacts/features
+      - artifacts/latest/features
       - src/vocalbaby/models
       - src/vocalbaby/pipeline/stage_04_tune.py
       - params.yaml
@@ -91,7 +91,7 @@ stages:
       - tuning.objectives
       - tuning.xgb_search_space
     outs:
-      - artifacts/models:
+      - artifacts/latest/tuning:
           cache: true
 
   # ---------------------------------------------------------------------------
@@ -101,8 +101,8 @@ stages:
   train:
     cmd: bash scripts/05_train.sh
     deps:
-      - artifacts/features
-      - artifacts/models  # Contains best_params.json from tuning
+      - artifacts/latest/features
+      - artifacts/latest/tuning  # Contains best_params.json from tuning
       - src/vocalbaby/models
       - src/vocalbaby/pipeline/stage_05_train.py
       - params.yaml
@@ -111,7 +111,7 @@ stages:
       - preprocessing
       - training
     outs:
-      - artifacts/models:
+      - artifacts/latest/models:
           cache: true
 
   # ---------------------------------------------------------------------------
@@ -121,8 +121,8 @@ stages:
   evaluate:
     cmd: bash scripts/06_evaluate.sh
     deps:
-      - artifacts/features
-      - artifacts/models  # Trained models
+      - artifacts/latest/features
+      - artifacts/latest/models  # Trained models
       - src/vocalbaby/eval
       - src/vocalbaby/pipeline/stage_06_evaluate.py
       - params.yaml
@@ -132,10 +132,10 @@ stages:
       - evaluation.confusion_matrix
       - evaluation.eval_splits
     outs:
-      - artifacts/eval:
+      - artifacts/latest/eval:
           cache: false
     plots:
-      - artifacts/eval:
+      - artifacts/latest/eval:
           cache: false
 
   # ---------------------------------------------------------------------------
@@ -145,7 +145,7 @@ stages:
   aggregate:
     cmd: bash scripts/07_aggregate.sh
     deps:
-      - artifacts/eval
+      - artifacts/latest/eval
       - src/vocalbaby/pipeline/stage_07_aggregate.py
       - params.yaml
     params:
@@ -153,9 +153,9 @@ stages:
       - aggregation.columns
       - aggregation.sort_by
     outs:
-      - artifacts/results/results_summary.csv:
+      - artifacts/latest/results/results_summary.csv:
           cache: false
     metrics:
-      - artifacts/results/results_summary.csv:
+      - artifacts/latest/results/results_summary.csv:
           cache: false
 
