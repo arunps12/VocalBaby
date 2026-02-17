@@ -149,9 +149,6 @@ stages:
       - features.sets
       - aggregation.columns
       - aggregation.sort_by
-    outs:
-      - artifacts/latest/results/results_summary.csv:
-          cache: false
     metrics:
       - artifacts/latest/results/results_summary.csv:
           cache: false
