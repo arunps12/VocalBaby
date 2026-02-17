@@ -156,6 +156,10 @@ dmypy.json
 *.tiff
 *.gif
 
+# Allow confusion matrix images in images/ folder
+!images/
+!images/*.png
+
 # archives
 *.zip
 *.tar.gz
