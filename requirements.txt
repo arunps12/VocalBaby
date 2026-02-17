@@ -24,6 +24,7 @@ opensmile
 xgboost
 imbalanced-learn
 optuna
+transformers
 fastapi
 uvicorn
 python-multipart

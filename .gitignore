@@ -198,3 +198,6 @@ infra/terraform/**/.terraform.lock.hcl
 artifacts/drift/
 logs/
 
+#docs
+docs/
+
