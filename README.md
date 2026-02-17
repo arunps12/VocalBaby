@@ -1,4 +1,4 @@
-# VocalBaby — Feature Comparison Pipeline for Infant Vocalization Classification
+# VocalBaby — Infant Vocalization Classification: From Feature Comparison to Production
 
 [![Python](https://img.shields.io/badge/Python-3.10-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![uv](https://img.shields.io/badge/uv-Astral-DE5FE9?logo=astral&logoColor=white)](https://docs.astral.sh/uv/)
@@ -20,28 +20,38 @@
 [![Ruff](https://img.shields.io/badge/Ruff-Linter-D7FF64?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**A reproducible ML pipeline for comparing XGBoost model performance across multiple acoustic feature sets for infant vocalization classification.**
+**An end-to-end infant vocalization classification system — from acoustic feature comparison research to a production-ready MLOps pipeline.**
 
 ---
 
 ## Project Purpose
 
-This project provides a **clean, reproducible pipeline** to:
+This project was developed in **two phases**:
 
-1. **Compare XGBoost performance** across 4 acoustic feature sets:
-   - **eGeMAPS** (88-dim openSMILE features)
-   - **MFCC** (20/40-dim librosa features)
-   - **HuBERT SSL** (768-dim embeddings from [arunps/hubert-home-hindibabynet-ssl](https://huggingface.co/arunps/hubert-home-hindibabynet-ssl))
-   - **Wav2Vec2 SSL** (768-dim embeddings from [arunps/wav2vec2-home-hindibabynet-ssl](https://huggingface.co/arunps/wav2vec2-home-hindibabynet-ssl))
+### Phase 1: Feature Comparison Research
 
-2. **Find optimal hyperparameters** for each feature set independently using Optuna (40 trials, multi-objective: UAR + F1)
+We systematically compared **XGBoost classifier performance** across 4 acoustic feature representations to identify the optimal feature set for infant vocalization classification:
 
-3. **Generate comprehensive evaluation artifacts**:
-   - Confusion matrices for **both validation and test** splits
-   - Classification reports with per-class metrics
-   - Aggregated comparison table across all feature sets
+- **eGeMAPS** (88-dim openSMILE features)
+- **MFCC** (40-dim librosa features)
+- **HuBERT SSL** (768-dim embeddings from [arunps/hubert-home-hindibabynet-ssl](https://huggingface.co/arunps/hubert-home-hindibabynet-ssl))
+- **Wav2Vec2 SSL** (768-dim embeddings from [arunps/wav2vec2-home-hindibabynet-ssl](https://huggingface.co/arunps/wav2vec2-home-hindibabynet-ssl))
 
-4. **Maintain full reproducibility** via DVC pipeline and `params.yaml` configuration
+Each feature set was independently tuned with **Optuna (40 trials, multi-objective: UAR + F1)**, evaluated on both validation and test splits, and compared via confusion matrices, classification reports, and aggregated metrics.
+
+> **Result: eGeMAPS (88-dim handcrafted features) consistently outperformed the 768-dim SSL embeddings** across all metrics (UAR=0.460, Weighted F1=0.600 on test).
+
+### Phase 2: Production-Ready MLOps System
+
+Based on the research findings, we built a **complete production pipeline** using the best-performing eGeMAPS + XGBoost combination, equipped with:
+
+- **FastAPI** prediction server with `/predict` and `/predict_zip` endpoints
+- **DVC** pipeline for reproducible 7-stage training
+- **Docker** containerization for deployment
+- **Prometheus + Grafana** monitoring stack
+- **Evidently** data drift detection
+- **GitHub Actions** CI/CD (lint → build → push to ECR → deploy to EC2)
+- **Terraform** infrastructure-as-code for AWS (VPC, ECR, EC2, S3, IAM)
 
 ---
 
@@ -75,8 +85,8 @@ The system focuses on infant and adult vocalizations in naturalistic interaction
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/VisionInfantNet.git
-cd VisionInfantNet
+git clone https://github.com/arunps12/VocalBaby.git
+cd VocalBaby
 
 # Create virtual environment and install dependencies (using uv)
 uv venv
@@ -152,6 +162,21 @@ python -m vocalbaby.pipeline.stage_05_train
 python -m vocalbaby.pipeline.stage_06_evaluate
 python -m vocalbaby.pipeline.stage_07_aggregate
 ```
+
+#### Running the Prediction Server
+
+```bash
+# Via console entry point
+uv run vocalbaby-serve
+
+# Or via uvicorn directly
+uv run uvicorn vocalbaby.api.app:app --host 0.0.0.0 --port 8000
+```
+
+The server runs at `http://localhost:8000`:
+- **Swagger docs:** http://localhost:8000/docs
+- **Prometheus metrics:** http://localhost:8000/metrics
+- **Health check:** http://localhost:8000/health
 
 ---
 
@@ -387,9 +412,9 @@ Modify `params.yaml` and re-run `dvc repro` to update the pipeline.
 
 ---
 
-## Results & Artifacts
+## Feature Comparison Results
 
-### Latest Evaluation Results (Feb 17, 2026)
+### Phase 1 Evaluation (Feb 17, 2026)
 
 #### Overall Comparison (Sorted by UAR)
 
@@ -414,7 +439,7 @@ Modify `params.yaml` and re-run `dvc repro` to update the pipeline.
 | Laughing | **0.103** | 0.069 | 0.076 | 0.024 | 62 |
 | Non-canonical | **0.588** | 0.475 | 0.514 | 0.450 | 1,370 |
 
-> **Key finding:** eGeMAPS (88-dim handcrafted features) outperforms the 768-dim SSL embeddings when used with XGBoost. All models struggle with the **Laughing** class (F1 < 0.11) due to extreme scarcity (only 46 training samples). See [docs/Model_Evaluation_Report.md](docs/Model_Evaluation_Report.md) for detailed analysis.
+> **Key finding:** eGeMAPS (88-dim handcrafted features) outperforms the 768-dim SSL embeddings when used with XGBoost. This finding drove the decision to use **eGeMAPS as the production feature set**. All models struggle with the **Laughing** class (F1 < 0.11) due to extreme scarcity (only 46 training samples).
 
 #### Best Hyperparameters (Optuna, 40 Trials)
 
@@ -486,7 +511,7 @@ Modify `params.yaml` and re-run `dvc repro` to update the pipeline.
 
 ---
 
-## System Architecture & Workflow
+## System Architecture & Workflow (Phase 2: Production)
 
 ```mermaid
 flowchart TB
@@ -628,93 +653,11 @@ flowchart TB
 
 ---
 
-## Quick Start
+## Production Deployment
 
-### Prerequisites
+Based on the Phase 1 finding that **eGeMAPS outperforms SSL embeddings**, the production system uses eGeMAPS + XGBoost as its core model.
 
-- Python 3.10+
-- [uv](https://docs.astral.sh/uv/) (Astral package manager)
-
-### Setup
-
-```bash
-# Install uv (if not already)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Clone and install
-git clone https://github.com/arunps12/VocalBaby.git
-cd VocalBaby
-uv sync
-
-# Verify installation
-uv run python -c "import vocalbaby; print(vocalbaby.__version__)"
-```
-
-### Run the Prediction Server
-
-```bash
-# Via console entry point
-uv run vocalbaby-serve
-
-# Or via uvicorn directly
-uv run uvicorn vocalbaby.api.app:app --host 0.0.0.0 --port 8000
-```
-
-The server runs at `http://localhost:8000`:
-- **Swagger docs:** http://localhost:8000/docs
-- **Prometheus metrics:** http://localhost:8000/metrics
-- **Health check:** http://localhost:8000/health
-
-### Run the Training Pipeline
-
-```bash
-uv run vocalbaby-train
-```
-
----
-
-## Project Structure
-
-```
-VocalBaby/
-├── src/vocalbaby/           # Main package (src layout)
-│   ├── api/                 # FastAPI prediction server
-│   │   └── app.py
-│   ├── cli.py               # Console entry points
-│   ├── components/          # Pipeline components
-│   │   ├── data_ingestion.py
-│   │   ├── data_validation.py
-│   │   ├── data_transformation.py
-│   │   └── model_trainer.py
-│   ├── pipeline/            # Training & prediction pipelines
-│   ├── monitoring/          # Prometheus metrics + Evidently drift
-│   │   ├── metrics.py
-│   │   └── drift.py
-│   ├── entity/              # Data classes & configs
-│   ├── exception/           # Custom exceptions
-│   ├── logging/             # Logging setup
-│   ├── cloud/               # S3 sync
-│   ├── constant/            # Pipeline constants
-│   └── utils/               # ML utilities
-├── configs/                 # YAML configuration files
-├── scripts/                 # DVC stage runner scripts
-├── tests/                   # Test suite
-├── monitoring/              # Grafana & Prometheus configs
-│   ├── grafana/
-│   └── prometheus/
-├── infra/terraform/         # Infrastructure as Code
-│   ├── modules/
-│   └── envs/production/
-├── pyproject.toml           # PEP 621 package definition
-├── uv.lock                  # Lockfile (uv)
-├── dvc.yaml                 # DVC pipeline stages
-├── Dockerfile               # uv-based container build
-└── docker-compose.monitoring.yml
-```
-
----
-
-## API Endpoints
+### API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -731,9 +674,7 @@ curl -X POST http://localhost:8000/predict \
   -F "files=@segment.wav"
 ```
 
----
-
-## Machine Learning Model
+### Production Model
 
 The current production model uses:
 
@@ -741,7 +682,7 @@ The current production model uses:
 - **XGBoost classifier** tuned with Optuna
 - **SMOTE** oversampling (best performer in experiments)
 
-### Trained objects
+#### Trained Objects
 
 ```
 final_model/
@@ -750,9 +691,7 @@ final_model/
 └── label_encoder.pkl
 ```
 
----
-
-## Prediction Pipeline
+### Prediction Pipeline
 
 ```python
 from vocalbaby.pipeline.prediction_pipeline import PredictionPipeline
@@ -775,9 +714,7 @@ y_enc, y_dec, paths = pipe.predict_from_audio(["a.wav", "b.wav", "c.wav"])
 | `y_pred_decoded` | `np.ndarray` | Human-readable class labels |
 | `audio_paths` | `List[str]` | Files used for prediction |
 
----
-
-## DVC Pipeline
+### DVC Pipeline
 
 ```bash
 # Run full pipeline
@@ -789,9 +726,7 @@ dvc repro training
 dvc repro drift
 ```
 
----
-
-## Monitoring Stack
+### Monitoring Stack
 
 ```bash
 # Start VocalBaby API + Prometheus + Grafana
@@ -812,9 +747,7 @@ docker compose -f docker-compose.monitoring.yml up -d
 - `vocalbaby_model_info` — Model version metadata
 - `vocalbaby_drift_score` — Drift detection score
 
----
-
-## Drift Detection
+### Drift Detection
 
 ```bash
 # Run drift detection
@@ -826,9 +759,7 @@ uv run python -c "from vocalbaby.monitoring.drift import run_drift_report; run_d
 
 Reports are saved locally after each run.
 
----
-
-## Docker
+### Docker
 
 ```bash
 # Build
@@ -838,9 +769,7 @@ docker build -t vocalbaby .
 docker run -p 8000:8000 -v ./final_model:/app/final_model:ro vocalbaby
 ```
 
----
-
-## Infrastructure (Terraform)
+### Infrastructure (Terraform)
 
 ```bash
 cd infra/terraform/envs/production
@@ -853,6 +782,15 @@ terraform apply
 ```
 
 See `infra/terraform/README.md` for detailed IaC documentation.
+
+### CI/CD
+
+The GitHub Actions workflow (`.github/workflows/main.yml`) handles:
+
+1. **Lint & Test** — `uv sync` → `ruff check` → `pytest`
+2. **Build & Push** — Docker image → ECR
+3. **Deploy** — Pull & run on EC2
+4. **Nightly Drift** — Scheduled drift detection (cron)
 
 ---
 
@@ -871,17 +809,6 @@ uv run ruff check src/
 # Format
 uv run ruff format src/
 ```
-
----
-
-## CI/CD
-
-The GitHub Actions workflow (`.github/workflows/main.yml`) handles:
-
-1. **Lint & Test** — `uv sync` → `ruff check` → `pytest`
-2. **Build & Push** — Docker image → ECR
-3. **Deploy** — Pull & run on EC2
-4. **Nightly Drift** — Scheduled drift detection (cron)
 
 ---
 
