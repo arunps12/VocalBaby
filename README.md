@@ -653,7 +653,7 @@ dvc repro drift
 
 ```bash
 # Start VocalBaby API + Prometheus + Grafana
-docker compose -f docker-compose.monitoring.yml up -d
+docker compose up -d
 ```
 
 | Service | URL | Credentials |
