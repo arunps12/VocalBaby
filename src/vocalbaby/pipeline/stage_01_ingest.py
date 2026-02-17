@@ -2,6 +2,7 @@
 STAGE 01: DATA INGESTION
 
 Loads raw audio files and metadata, creates child-disjoint train/valid/test splits.
+Creates a NEW run (artifacts/<timestamp>/) and updates artifacts/latest symlink.
 """
 import sys
 import argparse
@@ -16,13 +17,13 @@ def main():
     parser = argparse.ArgumentParser(description="VocalBaby Pipeline - Stage 01: Data Ingestion")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     args = parser.parse_args()
-    
+
     try:
-        logging.info("Starting Stage  1: Data Ingestion")
+        logging.info("Starting Stage 01: Data Ingestion")
         artifact = run_data_ingestion()
         logging.info(f"Stage 01 completed: train={artifact.train_metadata_path}")
         return 0
-        
+
     except Exception as e:
         logging.error(f"Stage 01 failed: {e}")
         raise VocalBabyException(e, sys)

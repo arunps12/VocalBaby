@@ -16,12 +16,17 @@ from vocalbaby.constant.training_pipeline import (
 
 
 class PathConfig:
-    """Centralized path configuration for the pipeline."""
-    
+    """
+    Centralized path configuration for the pipeline.
+
+    All artifact paths resolve through artifacts/latest (symlink)
+    so every stage in a run shares the same timestamped directory.
+    """
+
     def __init__(self, base_dir: str = "."):
         self.base_dir = Path(base_dir)
         self.params = self._load_params()
-        
+
     def _load_params(self) -> Dict[str, Any]:
         """Load params.yaml."""
         params_path = self.base_dir / "params.yaml"
@@ -29,47 +34,52 @@ class PathConfig:
             with open(params_path, 'r') as f:
                 return yaml.safe_load(f)
         return {}
-    
+
     @property
     def artifacts_dir(self) -> Path:
-        """Base artifacts directory."""
-        return self.base_dir / self.params.get('artifacts', {}).get('base_dir', ARTIFACT_DIR)
-    
+        """Current run directory (resolved via artifacts/latest)."""
+        from vocalbaby.utils.run_manager import RunManager
+        try:
+            return RunManager.get_current_run_dir()
+        except FileNotFoundError:
+            # Fallback before any run exists
+            return self.base_dir / ARTIFACT_DIR
+
     @property
-    def data_dir(self) -> Path:
-        """Data artifacts directory."""
-        return self.artifacts_dir / "data"
-    
+    def data_ingestion_dir(self) -> Path:
+        return self.artifacts_dir / "data_ingestion"
+
+    @property
+    def data_validation_dir(self) -> Path:
+        return self.artifacts_dir / "data_validation"
+
     @property
     def features_dir(self) -> Path:
-        """Features artifacts directory."""
         return self.artifacts_dir / "features"
-    
+
+    @property
+    def tuning_dir(self) -> Path:
+        return self.artifacts_dir / "tuning"
+
     @property
     def models_dir(self) -> Path:
-        """Models artifacts directory."""
         return self.artifacts_dir / "models"
-    
+
     @property
     def eval_dir(self) -> Path:
-        """Evaluation artifacts directory."""
         return self.artifacts_dir / "eval"
-    
+
     @property
     def results_dir(self) -> Path:
-        """Results artifacts directory."""
         return self.artifacts_dir / "results"
-    
+
     def feature_set_dir(self, feature_set: str) -> Path:
-        """Get feature set directory."""
         return self.features_dir / feature_set
-    
+
     def model_dir(self, feature_set: str) -> Path:
-        """Get model directory for a feature set."""
         return self.models_dir / feature_set
-    
+
     def eval_set_dir(self, feature_set: str) -> Path:
-        """Get evaluation directory for a feature set."""
         return self.eval_dir / feature_set
 
 
