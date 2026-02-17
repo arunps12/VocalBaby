@@ -1,0 +1,252 @@
+# =============================================================================
+# VocalBaby Feature Comparison Pipeline - Central Configuration
+# =============================================================================
+# This file consolidates all pipeline parameters for reproducible experiments
+# comparing XGBoost performance across multiple acoustic feature sets.
+
+# -----------------------------------------------------------------------------
+# DATA CONFIGURATION
+# -----------------------------------------------------------------------------
+data:
+  # Raw data locations
+  raw_audio_dir: data/audio/raw
+  raw_metadata_file: data/metadata/private_metadata.csv
+  schema_file: data_schema/schema.yaml
+  
+  # Column names (must match existing pipeline constants)
+  child_id_col: child_ID
+  audio_id_col: clip_ID
+  target_col: Answer
+  age_col: age_mo_round
+  gender_col: child_gender
+  corpus_col: corpus
+  audio_path_col: path
+  
+  # Split configuration
+  seed: 42
+  # Child-disjoint splits (defined in existing data_ingestion.py)
+  # No split ratios needed - splits are pre-defined by child_ID groups
+
+# -----------------------------------------------------------------------------
+# ARTIFACT PATHS
+# -----------------------------------------------------------------------------
+artifacts:
+  base_dir: artifacts
+  # Stage-specific output directories
+  data:
+    raw: artifacts/data/raw
+    manifests: artifacts/data/manifests
+    validation: artifacts/data/validation
+  features: artifacts/features  # <feature_set>/<split>/{X.npy,y.npy,meta.parquet}
+  models: artifacts/models      # <feature_set>/{model.pkl,best_params.json,tuning/}
+  eval: artifacts/eval          # <feature_set>/{confusion_matrix_*.png,metrics_*.json}
+  results: artifacts/results    # results_summary.csv
+
+# -----------------------------------------------------------------------------
+# FEATURE EXTRACTION CONFIGURATION
+# -----------------------------------------------------------------------------
+features:
+  # Feature sets to compare (enable/disable as needed)
+  sets:
+    - egemaps
+    - mfcc
+    - hubert_ssl
+    - wav2vec2_ssl
+  
+  # eGeMAPS configuration (via openSMILE)
+  egemaps:
+    feature_set: eGeMAPSv02
+    feature_level: functionals  # 88-dimensional
+    sample_rate: 16000
+  
+  # MFCC configuration (via librosa)
+  mfcc:
+    n_mfcc: 20
+    sample_rate: 16000
+    hop_length: 160
+    win_length: 400
+    n_fft: 512
+    pool: mean_std  # mean+std pooling across time -> 40-dim
+  
+  # HuBERT SSL configuration (via transformers)
+  hubert_ssl:
+    model_name: arunps/hubert-home-hindibabynet-ssl
+    sample_rate: 16000
+    layer: last  # which layer to extract from
+    pool: mean   # temporal pooling method (mean, max, mean_std)
+    device: cpu  # 'cuda' or 'cpu'
+  
+  # Wav2Vec2 SSL configuration (via transformers)
+  wav2vec2_ssl:
+    model_name: arunps/wav2vec2-home-hindibabynet-ssl
+    sample_rate: 16000
+    layer: last
+    pool: mean
+    device: cpu
+
+# -----------------------------------------------------------------------------
+# PREPROCESSING CONFIGURATION
+# -----------------------------------------------------------------------------
+preprocessing:
+  # Label encoding
+  label_encoder: sklearn  # LabelEncoder
+  
+  # Missing value imputation
+  imputer:
+    strategy: median  # median imputation as per notebook 06
+    
+  # Class imbalance handling
+  resampling:
+    method: smote
+    random_state: 42
+    k_neighbors: 5
+
+# -----------------------------------------------------------------------------
+# HYPERPARAMETER TUNING CONFIGURATION
+# -----------------------------------------------------------------------------
+tuning:
+  framework: optuna
+  n_trials: 40  # Per notebook 06 best practice
+  timeout: null  # No timeout (run all trials)
+  
+  # Multi-objective optimization
+  objectives:
+    - uar       # Unweighted Average Recall (balanced accuracy)
+    - macro_f1  # Macro F1-score
+  direction: maximize  # For both objectives
+  
+  # Optuna sampler
+  sampler: TPESampler
+  sampler_params:
+    seed: 42
+    n_startup_trials: 10
+  
+  # XGBoost search space (matching notebook 06)
+  xgb_search_space:
+    max_depth: [3, 10]
+    learning_rate: [0.001, 0.3]
+    n_estimators: [100, 500]
+    subsample: [0.6, 1.0]
+    colsample_bytree: [0.6, 1.0]
+    min_child_weight: [1, 10]
+    gamma: [0.0, 0.5]
+    reg_alpha: [0.0, 1.0]
+    reg_lambda: [0.0, 2.0]
+  
+  # Fixed XGBoost params
+  xgb_fixed_params:
+    objective: multi:softmax
+    eval_metric: mlogloss
+    tree_method: hist
+    verbosity: 0
+    random_state: 42
+
+# -----------------------------------------------------------------------------
+# MODEL TRAINING CONFIGURATION
+# -----------------------------------------------------------------------------
+training:
+  model_type: xgboost
+  
+  # Early stopping (applied during final training)
+  early_stopping:
+    enabled: true
+    rounds: 50
+    metric: mlogloss
+    
+  # Save best model from validation performance
+  save_best_model: true
+
+# -----------------------------------------------------------------------------
+# EVALUATION CONFIGURATION
+# -----------------------------------------------------------------------------
+evaluation:
+  # Metrics to compute
+  metrics:
+    - accuracy
+    - balanced_accuracy  # UAR
+    - macro_f1
+    - weighted_f1
+    - macro_precision
+    - macro_recall
+  
+  # Confusion matrix settings
+  confusion_matrix:
+    normalize: false  # Save raw counts
+    save_csv: true
+    save_png: true
+    figsize: [10, 8]
+    cmap: Blues
+  
+  # Classification report
+  save_classification_report: true
+  
+  # Splits to evaluate
+  eval_splits:
+    - valid
+    - test
+
+# -----------------------------------------------------------------------------
+# AGGREGATION CONFIGURATION
+# -----------------------------------------------------------------------------
+aggregation:
+  # Output file
+  output_file: artifacts/results/results_summary.csv
+  
+  # Columns to include in summary
+  columns:
+    - feature_set
+    - split
+    - n_samples
+    - accuracy
+    - balanced_accuracy
+    - macro_f1
+    - weighted_f1
+    - macro_precision
+    - macro_recall
+  
+  # Sort by
+  sort_by: macro_f1
+  sort_ascending: false
+
+# -----------------------------------------------------------------------------
+# DRIFT DETECTION CONFIGURATION
+# -----------------------------------------------------------------------------
+drift:
+  reference_split: train  # Use train split as reference
+  current_split: valid    # Compare against validation split
+  
+  column_drift:
+    stattest: wasserstein
+    threshold: 0.1
+    
+  dataset_drift:
+    share_threshold: 0.3
+  
+  report:
+    output_dir: artifacts/drift
+    html_report: true
+    json_report: true
+
+# -----------------------------------------------------------------------------
+# LOGGING CONFIGURATION
+# -----------------------------------------------------------------------------
+logging:
+  level: INFO
+  log_dir: logs
+  log_file: pipeline.log
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# -----------------------------------------------------------------------------
+# DVC CONFIGURATION
+# -----------------------------------------------------------------------------
+dvc:
+  # Remote storage
+  remote:
+    name: s3remote
+    url: s3://vocalbaby-artifacts
+  
+  # Auto-staging
+  autostage: true
+  
+  # Cache directory
+  cache_dir: .dvc/cache
