@@ -80,6 +80,7 @@ def train_xgboost_with_best_params(
             objective="multi:softprob",
             eval_metric="mlogloss",
             tree_method="hist",
+            device="cuda",
             random_state=random_state,
             n_jobs=-1,
         )

@@ -11,7 +11,7 @@ Outputs:
 import sys
 import argparse
 
-from vocalbaby.experiments.scripts.tune_hyperparams import tune_hyperparams_for_set
+from vocalbaby.experiments.scripts.tune_hyperparams import tune_feature_set
 from vocalbaby.config.schemas import ConfigLoader
 from vocalbaby.utils.run_manager import RunManager
 from vocalbaby.logging.logger import logging
@@ -28,27 +28,41 @@ def main():
     args = parser.parse_args()
 
     try:
+        print("\n" + "=" * 70)
+        print("  STAGE 04: HYPERPARAMETER TUNING - STARTED")
+        print("=" * 70)
         logging.info("Starting Stage 04: Hyperparameter Tuning")
 
         config = ConfigLoader()
         feature_sets = args.feature_sets or config.get_feature_sets()
         n_trials = args.n_trials or config.get('tuning.n_trials', 40)
+        search_space = config.get('tuning.xgb_search_space', None)
 
-        logging.info(f"Run directory  : {RunManager.get_current_run_dir()}")
+        artifact_dir = str(RunManager.get_current_run_dir())
+        print(f"  Run directory  : {artifact_dir}")
+        print(f"  Feature sets   : {feature_sets}")
+        print(f"  Optuna trials  : {n_trials}")
+        logging.info(f"Run directory  : {artifact_dir}")
         logging.info(f"Feature sets   : {feature_sets}")
         logging.info(f"Optuna trials  : {n_trials}")
 
-        for feature_set in feature_sets:
+        for i, feature_set in enumerate(feature_sets, 1):
+            print(f"\n  [{i}/{len(feature_sets)}] Tuning: {feature_set} ...")
             logging.info(f"\n{'='*80}")
             logging.info(f"Tuning hyperparameters: {feature_set}")
             logging.info(f"{'='*80}")
 
-            tune_hyperparams_for_set(
+            tune_feature_set(
                 feature_set=feature_set,
+                artifact_dir=artifact_dir,
                 n_trials=n_trials,
-                force_retune=args.force,
+                search_space=search_space,
             )
+            print(f"  [{i}/{len(feature_sets)}] Done:   {feature_set}")
 
+        print("\n" + "=" * 70)
+        print("  STAGE 04: HYPERPARAMETER TUNING - COMPLETED")
+        print("=" * 70 + "\n")
         logging.info("Stage 04 completed: Hyperparameter tuning")
         return 0
 

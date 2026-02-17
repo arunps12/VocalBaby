@@ -29,18 +29,19 @@ from vocalbaby.exception.exception import VocalBabyException
 FEATURE_SETS = ["egemaps", "mfcc", "hubert_ssl", "wav2vec2_ssl"]
 
 
-def load_features_for_tuning(feature_set: str):
+def load_features_for_tuning(feature_set: str, artifact_dir: str):
     """
     Load train and valid features for hyperparameter tuning.
     
     Args:
         feature_set: Feature set name
+        artifact_dir: Path to artifact directory
         
     Returns:
         X_train, X_valid
     """
     try:
-        feature_dir = f"artifacts/features/{feature_set}"
+        feature_dir = os.path.join(artifact_dir, "features", feature_set)
         
         X_train = np.load(os.path.join(feature_dir, "train/features.npy"))
         X_valid = np.load(os.path.join(feature_dir, "valid/features.npy"))
@@ -60,6 +61,7 @@ def tune_feature_set(
     artifact_dir: str,
     n_trials: int = 40,
     random_state: int = 42,
+    search_space: dict = None,
 ):
     """
     Run hyperparameter tuning for a specific feature set.
@@ -69,6 +71,7 @@ def tune_feature_set(
         artifact_dir: Path to artifact directory
         n_trials: Number of Optuna trials
         random_state: Random seed
+        search_space: Search space ranges from params.yaml
     """
     try:
         logging.info("=" * 80)
@@ -76,14 +79,15 @@ def tune_feature_set(
         logging.info("=" * 80)
         
         # Load features
-        X_train, X_valid = load_features_for_tuning(feature_set)
+        X_train, X_valid = load_features_for_tuning(feature_set, artifact_dir)
         
         # Load labels
         y_train, y_valid, y_test, label_encoder, class_names = load_labels(artifact_dir)
         
-        # Save label encoder (reusable across feature sets)
-        model_dir = f"artifacts/models/{feature_set}"
-        encoder_path = os.path.join(model_dir, "label_encoder.pkl")
+        # Save label encoder under tuning directory
+        tuning_dir = os.path.join(artifact_dir, "tuning", feature_set)
+        os.makedirs(tuning_dir, exist_ok=True)
+        encoder_path = os.path.join(tuning_dir, "label_encoder.pkl")
         save_label_encoder(label_encoder, encoder_path)
         
         # Run Optuna tuning
@@ -97,10 +101,11 @@ def tune_feature_set(
             imputer_strategy="median",
             apply_smote=True,
             study_name=f"xgb_{feature_set}_smote_optuna",
+            search_space=search_space,
         )
         
         # Save best params
-        params_path = os.path.join(model_dir, "best_params.json")
+        params_path = os.path.join(tuning_dir, "best_params.json")
         save_best_params(best_params, params_path)
         
         logging.info("=" * 80)

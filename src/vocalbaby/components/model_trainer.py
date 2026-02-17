@@ -167,6 +167,7 @@ class ModelTrainer:
             objective="multi:softprob",
             eval_metric="mlogloss",
             tree_method="hist",
+            device="cuda",
             random_state=42,
             n_jobs=-1,
         )

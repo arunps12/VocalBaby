@@ -11,7 +11,7 @@ Outputs:
 import sys
 import argparse
 
-from vocalbaby.experiments.scripts.evaluate_model import evaluate_model_for_set
+from vocalbaby.experiments.scripts.evaluate_model import evaluate_feature_set
 from vocalbaby.config.schemas import ConfigLoader
 from vocalbaby.utils.run_manager import RunManager
 from vocalbaby.logging.logger import logging
@@ -32,7 +32,8 @@ def main():
         config = ConfigLoader()
         feature_sets = args.feature_sets or config.get_feature_sets()
 
-        logging.info(f"Run directory : {RunManager.get_current_run_dir()}")
+        artifact_dir = str(RunManager.get_current_run_dir())
+        logging.info(f"Run directory : {artifact_dir}")
         logging.info(f"Feature sets  : {feature_sets}")
 
         for feature_set in feature_sets:
@@ -40,9 +41,9 @@ def main():
             logging.info(f"Evaluating model: {feature_set}")
             logging.info(f"{'='*80}")
 
-            evaluate_model_for_set(
+            evaluate_feature_set(
                 feature_set=feature_set,
-                force_reeval=args.force,
+                artifact_dir=artifact_dir,
             )
 
         logging.info("Stage 06 completed: Model evaluation")

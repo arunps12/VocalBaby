@@ -16,6 +16,7 @@ from typing import Dict, Tuple
 from collections import Counter
 
 import optuna
+optuna.logging.set_verbosity(optuna.logging.WARNING)  # silence Optuna's own logs
 from xgboost import XGBClassifier
 from sklearn.impute import SimpleImputer
 from imblearn.over_sampling import SMOTE
@@ -23,6 +24,20 @@ from imblearn.over_sampling import SMOTE
 from vocalbaby.exception.exception import VocalBabyException
 from vocalbaby.logging.logger import logging
 from vocalbaby.utils.ml_utils.metric.classification_metric import get_classification_score
+
+
+# Default search space (fallback when params.yaml not provided)
+DEFAULT_SEARCH_SPACE = {
+    "max_depth": [3, 12],
+    "learning_rate": [0.01, 0.3],
+    "n_estimators": [100, 1500],
+    "subsample": [0.5, 1.0],
+    "colsample_bytree": [0.5, 1.0],
+    "min_child_weight": [1, 10],
+    "gamma": [0.0, 5.0],
+    "reg_alpha": [0.0, 5.0],
+    "reg_lambda": [0.0, 5.0],
+}
 
 
 def run_optuna_tuning(
@@ -35,6 +50,7 @@ def run_optuna_tuning(
     imputer_strategy: str = "median",
     apply_smote: bool = True,
     study_name: str = "xgb_tuning",
+    search_space: Dict = None,
 ) -> Tuple[Dict, optuna.study.Study]:
     """
     Run Optuna hyperparameter tuning for XGBoost.
@@ -55,6 +71,7 @@ def run_optuna_tuning(
         imputer_strategy: Imputation strategy ("median", "mean", etc.)
         apply_smote: Whether to apply SMOTE resampling
         study_name: Optuna study name
+        search_space: Dict of param ranges from params.yaml (uses defaults if None)
         
     Returns:
         best_params: Dict of best hyperparameters
@@ -85,23 +102,39 @@ def run_optuna_tuning(
             y_train_resampled = y_train
             logging.info("SMOTE disabled; using original training data")
         
+        # Resolve search space
+        sp = search_space or DEFAULT_SEARCH_SPACE
+        print(f"  Search space: n_estimators={sp.get('n_estimators', [100,1500])}, "
+              f"max_depth={sp.get('max_depth', [3,12])}", flush=True)
+        logging.info(f"Search space config: {sp}")
+
         # Step 3: Define Optuna objective
         def objective(trial):
             """
             Optuna objective function.
             Returns (UAR, F1) for multi-objective optimization.
             """
-            # Hyperparameter search space (matching notebook 06)
+            # Hyperparameter search space (from params.yaml)
+            sp_md = sp.get("max_depth", [3, 10])
+            sp_lr = sp.get("learning_rate", [0.001, 0.3])
+            sp_ne = sp.get("n_estimators", [100, 500])
+            sp_ss = sp.get("subsample", [0.6, 1.0])
+            sp_cb = sp.get("colsample_bytree", [0.6, 1.0])
+            sp_gm = sp.get("gamma", [0.0, 0.5])
+            sp_mc = sp.get("min_child_weight", [1, 10])
+            sp_ra = sp.get("reg_alpha", [0.0, 1.0])
+            sp_rl = sp.get("reg_lambda", [0.0, 2.0])
+
             params = {
-                "max_depth": trial.suggest_int("max_depth", 3, 12),
-                "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
-                "n_estimators": trial.suggest_int("n_estimators", 100, 1500),
-                "subsample": trial.suggest_float("subsample", 0.5, 1.0),
-                "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
-                "gamma": trial.suggest_float("gamma", 0.0, 5.0),
-                "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
-                "reg_lambda": trial.suggest_float("reg_lambda", 0.0, 5.0),
-                "reg_alpha": trial.suggest_float("reg_alpha", 0.0, 5.0),
+                "max_depth": trial.suggest_int("max_depth", int(sp_md[0]), int(sp_md[1])),
+                "learning_rate": trial.suggest_float("learning_rate", float(sp_lr[0]), float(sp_lr[1]), log=True),
+                "n_estimators": trial.suggest_int("n_estimators", int(sp_ne[0]), int(sp_ne[1])),
+                "subsample": trial.suggest_float("subsample", float(sp_ss[0]), float(sp_ss[1])),
+                "colsample_bytree": trial.suggest_float("colsample_bytree", float(sp_cb[0]), float(sp_cb[1])),
+                "gamma": trial.suggest_float("gamma", float(sp_gm[0]), float(sp_gm[1])),
+                "min_child_weight": trial.suggest_int("min_child_weight", int(sp_mc[0]), int(sp_mc[1])),
+                "reg_lambda": trial.suggest_float("reg_lambda", float(sp_rl[0]), float(sp_rl[1])),
+                "reg_alpha": trial.suggest_float("reg_alpha", float(sp_ra[0]), float(sp_ra[1])),
             }
             
             # Build model
@@ -110,6 +143,7 @@ def run_optuna_tuning(
                 objective="multi:softprob",
                 eval_metric="mlogloss",
                 tree_method="hist",
+                device="cuda",
                 random_state=random_state,
                 n_jobs=-1,
             )
@@ -129,6 +163,7 @@ def run_optuna_tuning(
             trial.set_user_attr("UAR", uar)
             trial.set_user_attr("F1", f1)
             
+            print(f"  [Trial {trial.number:>3d}/{n_trials}] UAR={uar:.4f}  F1={f1:.4f}", flush=True)
             logging.info(f"[Trial {trial.number}] UAR={uar:.4f} F1={f1:.4f}")
             
             return uar, f1
@@ -140,9 +175,11 @@ def run_optuna_tuning(
             study_name=study_name,
         )
         
+        print(f"\n  Starting optimization with {n_trials} trials...\n", flush=True)
         logging.info(f"Starting optimization with {n_trials} trials...")
-        study.optimize(objective, n_trials=n_trials)
+        study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
         
+        print(f"\n  Optimization complete. Pareto-optimal trials: {len(study.best_trials)}", flush=True)
         logging.info("Optuna tuning completed.")
         logging.info(f"Number of Pareto-optimal trials: {len(study.best_trials)}")
         
@@ -153,6 +190,10 @@ def run_optuna_tuning(
         logging.info("=" * 80)
         logging.info("BEST TRIAL SELECTED (by max UAR)")
         logging.info("=" * 80)
+        print(f"  Best Trial  : #{best_trial.number}", flush=True)
+        print(f"  Best UAR    : {best_trial.values[0]:.4f}", flush=True)
+        print(f"  Best F1     : {best_trial.values[1]:.4f}", flush=True)
+        print(f"  Best params : {best_params}\n", flush=True)
         logging.info(f"Trial number: {best_trial.number}")
         logging.info(f"UAR: {best_trial.values[0]:.4f}")
         logging.info(f"F1: {best_trial.values[1]:.4f}")

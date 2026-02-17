@@ -74,7 +74,7 @@ features:
     sample_rate: 16000
     layer: last  # which layer to extract from
     pool: mean   # temporal pooling method (mean, max, mean_std)
-    device: cpu  # 'cuda' or 'cpu'
+    device: cuda  # 'cuda' or 'cpu'
   
   # Wav2Vec2 SSL configuration (via transformers)
   wav2vec2_ssl:
@@ -82,7 +82,7 @@ features:
     sample_rate: 16000
     layer: last
     pool: mean
-    device: cpu
+    device: cuda
 
 # -----------------------------------------------------------------------------
 # PREPROCESSING CONFIGURATION
@@ -123,15 +123,15 @@ tuning:
   
   # XGBoost search space (matching notebook 06)
   xgb_search_space:
-    max_depth: [3, 10]
-    learning_rate: [0.001, 0.3]
-    n_estimators: [100, 500]
-    subsample: [0.6, 1.0]
-    colsample_bytree: [0.6, 1.0]
+    max_depth: [3, 12]
+    learning_rate: [0.01, 0.3]
+    n_estimators: [100, 1500]
+    subsample: [0.5, 1.0]
+    colsample_bytree: [0.5, 1.0]
     min_child_weight: [1, 10]
-    gamma: [0.0, 0.5]
-    reg_alpha: [0.0, 1.0]
-    reg_lambda: [0.0, 2.0]
+    gamma: [0.0, 5.0]
+    reg_alpha: [0.0, 5.0]
+    reg_lambda: [0.0, 5.0]
   
   # Fixed XGBoost params
   xgb_fixed_params:
@@ -196,16 +196,13 @@ aggregation:
   columns:
     - feature_set
     - split
-    - n_samples
-    - accuracy
-    - balanced_accuracy
-    - macro_f1
-    - weighted_f1
-    - macro_precision
-    - macro_recall
+    - uar
+    - f1_score
+    - precision
+    - recall
   
   # Sort by
-  sort_by: macro_f1
+  sort_by: uar
   sort_ascending: false
 
 # -----------------------------------------------------------------------------

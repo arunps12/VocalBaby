@@ -1,0 +1,129 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: bash scripts/01_ingest.sh
+    deps:
+    - path: data/audio/raw
+      hash: md5
+      md5: 945527bdc577333fe366a80b9e4de59f.dir
+      size: 273359968
+      nfiles: 13486
+    - path: data/metadata/private_metadata.csv
+      hash: md5
+      md5: 4bdf314f707da148d262f49b544d4a14
+      size: 586115
+    - path: data_schema/schema.yaml
+      hash: md5
+      md5: 7d3d23acf43eccdae7b42ffe1c746126
+      size: 470
+    - path: src/vocalbaby/components/data_ingestion.py
+      hash: md5
+      md5: 6aa53ade5cb6e6f7bd1493d9c0599e1d
+      size: 6792
+    - path: src/vocalbaby/pipeline/stage_01_ingest.py
+      hash: md5
+      md5: b2553c195408aae44ce0456201a4e4c5
+      size: 1044
+    params:
+      params.yaml:
+        data.raw_audio_dir: data/audio/raw
+        data.raw_metadata_file: data/metadata/private_metadata.csv
+        data.schema_file: data_schema/schema.yaml
+    outs:
+    - path: artifacts/latest/data_ingestion/ingested_audio
+      hash: md5
+      md5: 4c02a1d5bcb9c1a9163c048aa8a659a3.dir
+      size: 215148146
+      nfiles: 10770
+    - path: artifacts/latest/data_ingestion/ingested_metadata
+      hash: md5
+      md5: cf5b7462e78905240f98b1f714dc7101.dir
+      size: 1324641
+      nfiles: 3
+  validate:
+    cmd: bash scripts/02_validate.sh
+    deps:
+    - path: artifacts/latest/data_ingestion
+      hash: md5
+      md5: 183262fb070248b7ebe6e20436af36a5.dir
+      size: 217448674
+      nfiles: 10774
+    - path: src/vocalbaby/components/data_validation.py
+      hash: md5
+      md5: 1336001f113c912a6c2ae1670f417c46
+      size: 13996
+    - path: src/vocalbaby/pipeline/stage_02_validate.py
+      hash: md5
+      md5: 6b8da63e59263b293c9e63ec3ca88de9
+      size: 1937
+    outs:
+    - path: artifacts/latest/data_validation/drift_report/drift_report.yaml
+      hash: md5
+      md5: 941ddae23af15532c6f58c4a560f45ce
+      size: 1849
+    - path: artifacts/latest/data_validation/validated
+      hash: md5
+      md5: 98226206c364db1299aea071b9525bee.dir
+      size: 1324641
+      nfiles: 3
+    - path: artifacts/latest/data_validation/validation_report.yaml
+      hash: md5
+      md5: dd0d28baa14195e771879de3e54ef4fa
+      size: 2901
+  transform:
+    cmd: bash scripts/03_transform.sh
+    deps:
+    - path: artifacts/latest/data_validation/validated
+      hash: md5
+      md5: 98226206c364db1299aea071b9525bee.dir
+      size: 1324641
+      nfiles: 3
+    - path: params.yaml
+      hash: md5
+      md5: 17be31624016444a003817a24022120f
+      size: 7248
+    - path: src/vocalbaby/features
+      hash: md5
+      md5: d1582e576fe69a45d6b4eeaef61633dc.dir
+      size: 21469
+      nfiles: 12
+    - path: src/vocalbaby/pipeline/stage_03_transform.py
+      hash: md5
+      md5: 0230f9eda7fc329d48e77c3f1502a8a5
+      size: 2115
+    params:
+      params.yaml:
+        features.egemaps:
+          feature_set: eGeMAPSv02
+          feature_level: functionals
+          sample_rate: 16000
+        features.hubert_ssl:
+          model_name: arunps/hubert-home-hindibabynet-ssl
+          sample_rate: 16000
+          layer: last
+          pool: mean
+          device: cpu
+        features.mfcc:
+          n_mfcc: 20
+          sample_rate: 16000
+          hop_length: 160
+          win_length: 400
+          n_fft: 512
+          pool: mean_std
+        features.sets:
+        - egemaps
+        - mfcc
+        - hubert_ssl
+        - wav2vec2_ssl
+        features.wav2vec2_ssl:
+          model_name: arunps/wav2vec2-home-hindibabynet-ssl
+          sample_rate: 16000
+          layer: last
+          pool: mean
+          device: cpu
+    outs:
+    - path: artifacts/latest/features
+      hash: md5
+      md5: 158cdf10e1f0acf694edaf0a53ca1919.dir
+      size: 70825056
+      nfiles: 12

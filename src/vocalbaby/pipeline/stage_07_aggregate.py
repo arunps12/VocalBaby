@@ -53,13 +53,10 @@ def aggregate_results(eval_dir: Path, feature_sets: list, splits: list = ["valid
             record = {
                 'feature_set': feature_set,
                 'split': split,
-                'n_samples': metrics.get('n_samples', 0),
-                'accuracy': metrics.get('accuracy', 0.0),
-                'balanced_accuracy': metrics.get('balanced_accuracy', 0.0),
-                'macro_f1': metrics.get('macro_f1', 0.0),
-                'weighted_f1': metrics.get('weighted_f1', 0.0),
-                'macro_precision': metrics.get('macro_precision', 0.0),
-                'macro_recall': metrics.get('macro_recall', 0.0),
+                'uar': metrics.get('uar', 0.0),
+                'f1_score': metrics.get('f1_score', 0.0),
+                'precision': metrics.get('precision', 0.0),
+                'recall': metrics.get('recall', 0.0),
             }
             records.append(record)
 
@@ -98,7 +95,7 @@ def main():
         )
 
         # Sort
-        sort_by = config.get('aggregation.sort_by', 'macro_f1')
+        sort_by = config.get('aggregation.sort_by', 'uar')
         sort_ascending = config.get('aggregation.sort_ascending', False)
         results_df = results_df.sort_values(by=sort_by, ascending=sort_ascending)
 

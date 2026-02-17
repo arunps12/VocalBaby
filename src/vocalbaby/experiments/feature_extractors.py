@@ -130,9 +130,9 @@ def load_hubert_model(model_name: str = "arunps/hubert-home-hindibabynet-ssl"):
         processor, model
     """
     try:
-        from transformers import Wav2Vec2Processor, HubertModel
+        from transformers import Wav2Vec2FeatureExtractor, HubertModel
         
-        processor = Wav2Vec2Processor.from_pretrained(model_name)
+        processor = Wav2Vec2FeatureExtractor.from_pretrained(model_name)
         model = HubertModel.from_pretrained(model_name)
         model.to(DEVICE)
         model.eval()
@@ -217,9 +217,9 @@ def load_wav2vec2_model(model_name: str = "arunps/wav2vec2-home-hindibabynet-ssl
         processor, model
     """
     try:
-        from transformers import Wav2Vec2Processor, Wav2Vec2Model
+        from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2Model
         
-        processor = Wav2Vec2Processor.from_pretrained(model_name)
+        processor = Wav2Vec2FeatureExtractor.from_pretrained(model_name)
         model = Wav2Vec2Model.from_pretrained(model_name)
         model.to(DEVICE)
         model.eval()

@@ -22,6 +22,7 @@ from vocalbaby.experiments.training import (
     train_xgboost_with_best_params,
     save_model,
     save_imputer,
+    save_label_encoder,
 )
 from vocalbaby.logging.logger import logging
 from vocalbaby.exception.exception import VocalBabyException
@@ -30,18 +31,19 @@ from vocalbaby.exception.exception import VocalBabyException
 FEATURE_SETS = ["egemaps", "mfcc", "hubert_ssl", "wav2vec2_ssl"]
 
 
-def load_features_for_training(feature_set: str):
+def load_features_for_training(feature_set: str, artifact_dir: str):
     """
     Load train features for model training.
     
     Args:
         feature_set: Feature set name
+        artifact_dir: Path to artifact directory
         
     Returns:
         X_train
     """
     try:
-        feature_dir = f"artifacts/features/{feature_set}"
+        feature_dir = os.path.join(artifact_dir, "features", feature_set)
         X_train = np.load(os.path.join(feature_dir, "train/features.npy"))
         
         logging.info(f"Loaded {feature_set} train features: {X_train.shape}")
@@ -70,14 +72,14 @@ def train_feature_set(
         logging.info("=" * 80)
         
         # Load features
-        X_train = load_features_for_training(feature_set)
+        X_train = load_features_for_training(feature_set, artifact_dir)
         
         # Load labels
         y_train, _, _, label_encoder, class_names = load_labels(artifact_dir)
         
-        # Load best params
-        model_dir = f"artifacts/models/{feature_set}"
-        params_path = os.path.join(model_dir, "best_params.json")
+        # Load best params from tuning directory
+        tuning_dir = os.path.join(artifact_dir, "tuning", feature_set)
+        params_path = os.path.join(tuning_dir, "best_params.json")
         
         if not os.path.exists(params_path):
             raise FileNotFoundError(
@@ -98,13 +100,18 @@ def train_feature_set(
             apply_smote=True,
         )
         
-        # Save model
+        # Save model artifacts
+        model_dir = os.path.join(artifact_dir, "models", feature_set)
+        os.makedirs(model_dir, exist_ok=True)
+        
         model_path = os.path.join(model_dir, "xgb_model.pkl")
         save_model(model, model_path)
         
-        # Save imputer
         imputer_path = os.path.join(model_dir, "imputer.pkl")
         save_imputer(imputer, imputer_path)
+        
+        encoder_path = os.path.join(model_dir, "label_encoder.pkl")
+        save_label_encoder(label_encoder, encoder_path)
         
         logging.info("=" * 80)
         logging.info(f"Training completed: {feature_set}")

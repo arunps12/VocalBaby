@@ -9,8 +9,17 @@ os.makedirs(logs_path,exist_ok=True)
 
 LOG_FILE_PATH=os.path.join(logs_path,LOG_FILE)
 
+LOG_FORMAT = "[ %(asctime)s ] %(lineno)d %(name)s - %(levelname)s - %(message)s"
+
+# StreamHandler that flushes every message (required for DVC / piped output)
+_stream_handler = logging.StreamHandler()
+_stream_handler.flush = lambda: _stream_handler.stream.flush()
+
 logging.basicConfig(
-    filename=LOG_FILE_PATH,
-    format="[ %(asctime)s ] %(lineno)d %(name)s - %(levelname)s - %(message)s",
+    format=LOG_FORMAT,
     level=logging.INFO,
+    handlers=[
+        logging.FileHandler(LOG_FILE_PATH),
+        _stream_handler,
+    ],
 )

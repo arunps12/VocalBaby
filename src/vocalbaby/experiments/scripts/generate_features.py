@@ -86,7 +86,8 @@ def generate_features_for_set(
             raise ValueError(f"Unknown feature set: {feature_set}")
         
         config = FEATURE_CONFIGS[feature_set]
-        output_dir = config["output_dir"]
+        # Build output_dir relative to artifact_dir instead of using hardcoded path
+        output_dir = os.path.join(artifact_dir, "features", feature_set)
         
         logging.info("=" * 80)
         logging.info(f"GENERATING FEATURES: {feature_set.upper()}")

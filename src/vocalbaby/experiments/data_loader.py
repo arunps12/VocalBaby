@@ -46,18 +46,18 @@ def get_latest_artifact_dir(root_dir: str = "artifacts") -> str:
 def load_labels(
     artifact_dir: str,
     fit_encoder: bool = True,
+    label_col: str = "Answer",
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, LabelEncoder, List[str]]:
     """
-    Load train/valid/test labels from artifact directory.
+    Load train/valid/test labels from metadata CSVs in artifact directory.
     
-    Replicates notebook 06 label loading:
-    - Loads raw string labels from .npy files
-    - Fits LabelEncoder on train, transforms all splits
-    - Returns encoded labels and encoder
+    Reads the label column from the metadata CSVs, fits a LabelEncoder
+    on the training set, and encodes all splits.
     
     Args:
-        artifact_dir: Path to artifact directory (e.g., artifacts/01_10_2026_12_40_47)
+        artifact_dir: Path to artifact directory (e.g., artifacts/02_17_2026_10_52_02)
         fit_encoder: If True, fit encoder on train; else assumes encoder already fitted
+        label_col: Name of the label column in metadata CSV
         
     Returns:
         y_train_enc: Encoded train labels
@@ -67,11 +67,12 @@ def load_labels(
         class_names: List of class names in order
     """
     try:
-        feature_root = os.path.join(artifact_dir, "data_transformation/features")
+        # Load metadata CSVs
+        train_df, valid_df, test_df = load_metadata_with_audio_paths(artifact_dir)
         
-        y_train = np.load(os.path.join(feature_root, "train_labels.npy"))
-        y_valid = np.load(os.path.join(feature_root, "valid_labels.npy"))
-        y_test = np.load(os.path.join(feature_root, "test_labels.npy"))
+        y_train = train_df[label_col].values
+        y_valid = valid_df[label_col].values
+        y_test = test_df[label_col].values
         
         label_encoder = LabelEncoder()
         

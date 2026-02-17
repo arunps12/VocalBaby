@@ -36,18 +36,19 @@ from vocalbaby.exception.exception import VocalBabyException
 FEATURE_SETS = ["egemaps", "mfcc", "hubert_ssl", "wav2vec2_ssl"]
 
 
-def load_features_for_evaluation(feature_set: str):
+def load_features_for_evaluation(feature_set: str, artifact_dir: str):
     """
     Load valid and test features for evaluation.
     
     Args:
         feature_set: Feature set name
+        artifact_dir: Path to artifact directory
         
     Returns:
         X_valid, X_test
     """
     try:
-        feature_dir = f"artifacts/features/{feature_set}"
+        feature_dir = os.path.join(artifact_dir, "features", feature_set)
         
         X_valid = np.load(os.path.join(feature_dir, "valid/features.npy"))
         X_test = np.load(os.path.join(feature_dir, "test/features.npy"))
@@ -79,7 +80,7 @@ def evaluate_feature_set(
         logging.info("=" * 80)
         
         # Load model artifacts
-        model_dir = f"artifacts/models/{feature_set}"
+        model_dir = os.path.join(artifact_dir, "models", feature_set)
         
         model_path = os.path.join(model_dir, "xgb_model.pkl")
         if not os.path.exists(model_path):
@@ -99,13 +100,13 @@ def evaluate_feature_set(
         class_names = list(label_encoder.classes_)
         
         # Load features
-        X_valid, X_test = load_features_for_evaluation(feature_set)
+        X_valid, X_test = load_features_for_evaluation(feature_set, artifact_dir)
         
         # Load labels
         _, y_valid, y_test, _, _ = load_labels(artifact_dir)
         
         # Evaluate on validation set
-        eval_dir = f"artifacts/eval/{feature_set}"
+        eval_dir = os.path.join(artifact_dir, "eval", feature_set)
         
         logging.info("\n" + "=" * 80)
         logging.info("VALIDATION SET EVALUATION")
@@ -201,7 +202,7 @@ def main():
             # Check which feature sets have been evaluated
             evaluated_sets = []
             for fs in FEATURE_SETS:
-                metrics_path = f"artifacts/eval/{fs}/metrics_valid.json"
+                metrics_path = os.path.join(artifact_dir, "eval", fs, "metrics_valid.json")
                 if os.path.exists(metrics_path):
                     evaluated_sets.append(fs)
             
