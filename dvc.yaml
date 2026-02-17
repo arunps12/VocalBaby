@@ -134,9 +134,6 @@ stages:
     outs:
       - artifacts/latest/eval:
           cache: false
-    plots:
-      - artifacts/latest/eval:
-          cache: false
 
   # ---------------------------------------------------------------------------
   # STAGE 07: RESULTS AGGREGATION
