@@ -20,7 +20,7 @@ def main():
     try:
         logging.info("Starting Stage  1: Data Ingestion")
         artifact = run_data_ingestion()
-        logging.info(f"Stage 01 completed: {artifact.artifact_dir}")
+        logging.info(f"Stage 01 completed: train={artifact.train_metadata_path}")
         return 0
         
     except Exception as e:
