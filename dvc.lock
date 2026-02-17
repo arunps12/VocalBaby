@@ -80,8 +80,8 @@ stages:
       nfiles: 3
     - path: params.yaml
       hash: md5
-      md5: 17be31624016444a003817a24022120f
-      size: 7248
+      md5: 96218513490280a3424cb7d7ae02cb34
+      size: 7250
     - path: src/vocalbaby/features
       hash: md5
       md5: d1582e576fe69a45d6b4eeaef61633dc.dir
@@ -102,7 +102,7 @@ stages:
           sample_rate: 16000
           layer: last
           pool: mean
-          device: cpu
+          device: cuda
         features.mfcc:
           n_mfcc: 20
           sample_rate: 16000
@@ -120,10 +120,223 @@ stages:
           sample_rate: 16000
           layer: last
           pool: mean
-          device: cpu
+          device: cuda
     outs:
     - path: artifacts/latest/features
       hash: md5
-      md5: 158cdf10e1f0acf694edaf0a53ca1919.dir
+      md5: 4db9a1c33a64f101552157cc8b03e5bd.dir
       size: 70825056
       nfiles: 12
+  tune:
+    cmd: bash scripts/04_tune.sh
+    deps:
+    - path: artifacts/latest/features
+      hash: md5
+      md5: 4db9a1c33a64f101552157cc8b03e5bd.dir
+      size: 70825056
+      nfiles: 12
+    - path: params.yaml
+      hash: md5
+      md5: 96218513490280a3424cb7d7ae02cb34
+      size: 7250
+    - path: src/vocalbaby/models
+      hash: md5
+      md5: e7d7bfe44e42d3512015ddaaa1f11eb8.dir
+      size: 313
+      nfiles: 1
+    - path: src/vocalbaby/pipeline/stage_04_tune.py
+      hash: md5
+      md5: 1042d5bb706f7a6dcab9bf2140277666
+      size: 2976
+    params:
+      params.yaml:
+        features.sets:
+        - egemaps
+        - mfcc
+        - hubert_ssl
+        - wav2vec2_ssl
+        tuning.n_trials: 40
+        tuning.objectives:
+        - uar
+        - macro_f1
+        tuning.xgb_search_space:
+          max_depth:
+          - 3
+          - 12
+          learning_rate:
+          - 0.01
+          - 0.3
+          n_estimators:
+          - 100
+          - 1500
+          subsample:
+          - 0.5
+          - 1.0
+          colsample_bytree:
+          - 0.5
+          - 1.0
+          min_child_weight:
+          - 1
+          - 10
+          gamma:
+          - 0.0
+          - 5.0
+          reg_alpha:
+          - 0.0
+          - 5.0
+          reg_lambda:
+          - 0.0
+          - 5.0
+    outs:
+    - path: artifacts/latest/tuning
+      hash: md5
+      md5: f72b780bc3650e834452acd72c743ad6.dir
+      size: 2331
+      nfiles: 8
+  train:
+    cmd: bash scripts/05_train.sh
+    deps:
+    - path: artifacts/latest/features
+      hash: md5
+      md5: 4db9a1c33a64f101552157cc8b03e5bd.dir
+      size: 70825056
+      nfiles: 12
+    - path: artifacts/latest/tuning
+      hash: md5
+      md5: f72b780bc3650e834452acd72c743ad6.dir
+      size: 2331
+      nfiles: 8
+    - path: params.yaml
+      hash: md5
+      md5: 96218513490280a3424cb7d7ae02cb34
+      size: 7250
+    - path: src/vocalbaby/models
+      hash: md5
+      md5: e7d7bfe44e42d3512015ddaaa1f11eb8.dir
+      size: 313
+      nfiles: 1
+    - path: src/vocalbaby/pipeline/stage_05_train.py
+      hash: md5
+      md5: 389ff603ba97540cc044943a3a581f7a
+      size: 2001
+    params:
+      params.yaml:
+        features.sets:
+        - egemaps
+        - mfcc
+        - hubert_ssl
+        - wav2vec2_ssl
+        preprocessing:
+          label_encoder: sklearn
+          imputer:
+            strategy: median
+          resampling:
+            method: smote
+            random_state: 42
+            k_neighbors: 5
+        training:
+          model_type: xgboost
+          early_stopping:
+            enabled: true
+            rounds: 50
+            metric: mlogloss
+          save_best_model: true
+    outs:
+    - path: artifacts/latest/models
+      hash: md5
+      md5: de39011f4940395acfd076ce3aee3ec8.dir
+      size: 13639314
+      nfiles: 12
+  evaluate:
+    cmd: bash scripts/06_evaluate.sh
+    deps:
+    - path: artifacts/latest/features
+      hash: md5
+      md5: 4db9a1c33a64f101552157cc8b03e5bd.dir
+      size: 70825056
+      nfiles: 12
+    - path: artifacts/latest/models
+      hash: md5
+      md5: de39011f4940395acfd076ce3aee3ec8.dir
+      size: 13639314
+      nfiles: 12
+    - path: params.yaml
+      hash: md5
+      md5: 96218513490280a3424cb7d7ae02cb34
+      size: 7250
+    - path: src/vocalbaby/eval
+      hash: md5
+      md5: e1069a6d30aeeae34668592dce94b050.dir
+      size: 376
+      nfiles: 1
+    - path: src/vocalbaby/pipeline/stage_06_evaluate.py
+      hash: md5
+      md5: ff9ec79f7f21ae6bde933453d531b11a
+      size: 2006
+    params:
+      params.yaml:
+        evaluation.confusion_matrix:
+          normalize: false
+          save_csv: true
+          save_png: true
+          figsize:
+          - 10
+          - 8
+          cmap: Blues
+        evaluation.eval_splits:
+        - valid
+        - test
+        evaluation.metrics:
+        - accuracy
+        - balanced_accuracy
+        - macro_f1
+        - weighted_f1
+        - macro_precision
+        - macro_recall
+        features.sets:
+        - egemaps
+        - mfcc
+        - hubert_ssl
+        - wav2vec2_ssl
+    outs:
+    - path: artifacts/latest/eval
+      hash: md5
+      md5: e787624569ba1e18c182d48064ef2dc6.dir
+      size: 1135404
+      nfiles: 36
+  aggregate:
+    cmd: bash scripts/07_aggregate.sh
+    deps:
+    - path: artifacts/latest/eval
+      hash: md5
+      md5: e787624569ba1e18c182d48064ef2dc6.dir
+      size: 1135404
+      nfiles: 36
+    - path: params.yaml
+      hash: md5
+      md5: 96218513490280a3424cb7d7ae02cb34
+      size: 7250
+    - path: src/vocalbaby/pipeline/stage_07_aggregate.py
+      hash: md5
+      md5: 278f145f69502a0b040f9ccaf9cef6b0
+      size: 3836
+    params:
+      params.yaml:
+        aggregation.columns:
+        - feature_set
+        - split
+        - uar
+        - f1_score
+        - precision
+        - recall
+        aggregation.sort_by: uar
+        features.sets:
+        - egemaps
+        - mfcc
+        - hubert_ssl
+        - wav2vec2_ssl
+    outs:
+    - path: artifacts/latest/results/results_summary.csv
+      hash: md5
+      md5: 3f9cb5f56ec7ed4457a34d3a70566342
+      size: 777

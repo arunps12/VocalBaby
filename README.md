@@ -2,7 +2,9 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![uv](https://img.shields.io/badge/uv-Astral-DE5FE9?logo=astral&logoColor=white)](https://docs.astral.sh/uv/)
-[![XGBoost](https://img.shields.io/badge/XGBoost-1.7-FF6600?logo=xgboost&logoColor=white)](https://xgboost.readthedocs.io/)
+[![XGBoost](https://img.shields.io/badge/XGBoost-3.2-FF6600?logo=xgboost&logoColor=white)](https://xgboost.readthedocs.io/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.10-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![CUDA](https://img.shields.io/badge/CUDA-12.7-76B900?logo=nvidia&logoColor=white)](https://developer.nvidia.com/cuda-toolkit)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-Container-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![Prometheus](https://img.shields.io/badge/Prometheus-Monitoring-E6522C?logo=prometheus&logoColor=white)](https://prometheus.io/)
@@ -47,13 +49,14 @@ This project provides a **clean, reproducible pipeline** to:
 
 **VocalBaby** is an end-to-end multi-class audio classification system designed for child language acquisition research. It classifies short infant audio segments into **5 vocalization categories**:
 
-| Class | Description | Samples |
-|-------|-------------|--------:|
-| **Non-canonical** | Non-canonical infant vocalizations (e.g., squeals, growls, vowel-like sounds) | 5,606 |
-| **Junk** | Background noise, silence, or non-speech artifacts | 4,974 |
-| **Canonical** | Canonical babbling (consonant–vowel syllables like "ba", "da") | 1,826 |
-| **Crying** | Infant cry episodes | 823 |
-| **Laughing** | Infant laughter | 241 |
+| Class | Description | Train | Valid | Test | Total | % |
+|-------|-------------|------:|------:|-----:|------:|---:|
+| **Non-canonical** | Non-canonical infant vocalizations (e.g., squeals, growls, vowel-like sounds) | 1,437 | 1,641 | 1,370 | 4,448 | 41.3% |
+| **Junk** | Background noise, silence, or non-speech artifacts | 1,430 | 1,357 | 1,392 | 4,179 | 38.8% |
+| **Canonical** | Canonical babbling (consonant–vowel syllables like "ba", "da") | 444 | 378 | 575 | 1,397 | 13.0% |
+| **Crying** | Infant cry episodes | 243 | 163 | 191 | 597 | 5.5% |
+| **Laughing** | Infant laughter | 46 | 41 | 62 | 149 | 1.4% |
+| | **Total** | **3,600** | **3,580** | **3,590** | **10,770** | |
 
 The system focuses on infant and adult vocalizations in naturalistic interaction recordings.
 
@@ -161,7 +164,7 @@ python -m vocalbaby.pipeline.stage_07_aggregate
 │  STAGE 01: DATA INGESTION                                       │
 │  • Loads raw audio + metadata                                   │
 │  • Creates child-disjoint train/valid/test splits               │
-│  Output: artifacts/latest/data_ingestion/                       │
+│  Output: data_ingestion/                                        │
 └───────────────────────┬─────────────────────────────────────────┘
                         ▼
 ┌─────────────────────────────────────────────────────────────────┐
@@ -169,7 +172,7 @@ python -m vocalbaby.pipeline.stage_07_aggregate
 │  • Schema validation                                            │
 │  • Data quality checks                                          │
 │  • Drift detection                                              │
-│  Output: artifacts/latest/data_validation/                      │
+│  Output: data_validation/                                       │
 └───────────────────────┬─────────────────────────────────────────┘
                         ▼
 ┌─────────────────────────────────────────────────────────────────┐
@@ -178,7 +181,7 @@ python -m vocalbaby.pipeline.stage_07_aggregate
 │  • MFCC (20/40-dim librosa)                                     │
 │  • HuBERT SSL (768-dim transformers)                            │
 │  • Wav2Vec2 SSL (768-dim transformers)                          │
-│  Output: artifacts/features/<feature_set>/<split>/              │
+│  Output: features/<feature_set>/<split>/                        │
 └───────────────────────┬─────────────────────────────────────────┘
                         ▼
 ┌─────────────────────────────────────────────────────────────────┐
@@ -186,7 +189,7 @@ python -m vocalbaby.pipeline.stage_07_aggregate
 │  • Optuna optimization (40 trials)                              │
 │  • Multi-objective: UAR + Macro F1                              │
 │  • Independent tuning per feature set                           │
-│  Output: artifacts/models/<feature_set>/best_params.json        │
+│  Output: tuning/<feature_set>/best_params.json                  │
 └───────────────────────┬─────────────────────────────────────────┘
                         ▼
 ┌─────────────────────────────────────────────────────────────────┐
@@ -194,7 +197,7 @@ python -m vocalbaby.pipeline.stage_07_aggregate
 │  • XGBoost training with best params                            │
 │  • SMOTE oversampling (k=5, random_state=42)                    │
 │  • Label encoding + median imputation                           │
-│  Output: artifacts/models/<feature_set>/xgb_model.pkl           │
+│  Output: models/<feature_set>/xgb_model.pkl                     │
 └───────────────────────┬─────────────────────────────────────────┘
                         ▼
 ┌─────────────────────────────────────────────────────────────────┐
@@ -203,14 +206,14 @@ python -m vocalbaby.pipeline.stage_07_aggregate
 │  • Confusion matrices (PNG + CSV)                               │
 │  • Classification reports                                       │
 │  • Metrics: Accuracy, UAR, F1, Precision, Recall                │
-│  Output: artifacts/eval/<feature_set>/                          │
+│  Output: eval/<feature_set>/                                    │
 └───────────────────────┬─────────────────────────────────────────┘
                         ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │  STAGE 07: RESULTS AGGREGATION                                  │
 │  • Comparison table across all feature sets                     │
 │  • Metrics for both valid and test splits                       │
-│  Output: artifacts/results/results_summary.csv                  │
+│  Output: results/results_summary.csv                            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -294,28 +297,6 @@ The **HuBERT** and **Wav2Vec2** models used in this pipeline are **custom fine-t
 │   ├── exception/                 # Exception handling
 │   └── cli.py                     # Command-line interface
 │
-├── artifacts/                     # Pipeline outputs (DVC-tracked)
-│   ├── data/                      # Ingested + validated data
-│   ├── features/                  # Feature arrays
-│   │   └── <feature_set>/
-│   │       ├── train/
-│   │       ├── valid/
-│   │       └── test/
-│   ├── models/                    # Trained models
-│   │   └── <feature_set>/
-│   │       ├── xgb_model.pkl
-│   │       ├── best_params.json
-│   │       ├── label_encoder.pkl
-│   │       └── imputer.pkl
-│   ├── eval/                      # Evaluation results
-│   │   └── <feature_set>/
-│   │       ├── confusion_matrix_valid.png
-│   │       ├── confusion_matrix_test.png
-│   │       ├── metrics_valid.json
-│   │       └── metrics_test.json
-│   └── results/                   # Aggregated results
-│       └── results_summary.csv    # Main comparison table
-│
 ├── notebooks/                     # Exploratory notebooks (not part of pipeline)
 │   ├── 01_EDA.ipynb
 │   ├── 02__feature_and_model_selection_experiments.ipynb
@@ -364,10 +345,14 @@ tuning:
     - macro_f1   # Macro F1-score
   
   xgb_search_space:
-    max_depth: [3, 10]
-    learning_rate: [0.001, 0.3]
-    n_estimators: [100, 500]
-    # ... more parameters
+    max_depth: [3, 12]
+    learning_rate: [0.01, 0.3]
+    n_estimators: [100, 1500]
+    subsample: [0.5, 1.0]
+    colsample_bytree: [0.5, 1.0]
+    gamma: [0.0, 5.0]
+    reg_alpha: [0.0, 5.0]
+    reg_lambda: [0.0, 5.0]
 ```
 
 ### Evaluation
@@ -385,53 +370,87 @@ evaluation:
     save_png: true
 ```
 
+### GPU Acceleration
+```yaml
+# XGBoost trains on GPU (set in code)
+# device="cuda", tree_method="hist"
+
+# SSL feature extraction on GPU
+features:
+  hubert_ssl:
+    device: cuda
+  wav2vec2_ssl:
+    device: cuda
+```
+
 Modify `params.yaml` and re-run `dvc repro` to update the pipeline.
 
 ---
 
 ## Results & Artifacts
 
-### Key Output Files
+### Latest Evaluation Results (Feb 17, 2026)
 
-1. **`artifacts/results/results_summary.csv`** - Main comparison table
-   ```csv
-   feature_set,split,n_samples,accuracy,balanced_accuracy,macro_f1,...
-   egemaps,test,1000,0.82,0.78,0.75,...
-   mfcc,test,1000,0.79,0.75,0.72,...
-   hubert_ssl,test,1000,0.84,0.81,0.78,...
-   wav2vec2_ssl,test,1000,0.85,0.82,0.79,...
-   ```
+#### Overall Comparison (Sorted by UAR)
 
-2. **Confusion Matrices** - PNG + CSV for each feature set × split
-   - `artifacts/eval/egemaps/confusion_matrix_valid.png`
-   - `artifacts/eval/egemaps/confusion_matrix_test.png`
-   - ... (same for mfcc, hubert_ssl, wav2vec2_ssl)
+| Rank | Feature Set | Split | UAR | Weighted F1 | Precision | Accuracy |
+|------|------------|-------|-----|-------------|-----------|----------|
+| 1 | **eGeMAPS** | valid | **0.462** | **0.614** | 0.635 | 60.3% |
+| 2 | **eGeMAPS** | test | **0.460** | **0.600** | 0.612 | 59.3% |
+| 3 | HuBERT SSL | test | 0.443 | 0.554 | 0.579 | 54.5% |
+| 4 | MFCC | test | 0.418 | 0.522 | 0.550 | 51.3% |
+| 5 | HuBERT SSL | valid | 0.411 | 0.551 | 0.596 | 53.6% |
+| 6 | MFCC | valid | 0.409 | 0.519 | 0.591 | 49.8% |
+| 7 | Wav2Vec2 SSL | test | 0.377 | 0.478 | 0.519 | 45.9% |
+| 8 | Wav2Vec2 SSL | valid | 0.372 | 0.468 | 0.539 | 44.9% |
 
-3. **Best Hyperparameters** - JSON for each feature set
-   - `artifacts/models/egemaps/best_params.json`
-   - `artifacts/models/mfcc/best_params.json`
-   - ... etc
+#### Per-Class F1-Scores (Test Split)
 
-4. **Trained Models** - Pickled XGBoost models
-   - `artifacts/models/<feature_set>/xgb_model.pkl`
-   - `artifacts/models/<feature_set>/label_encoder.pkl`
-   - `artifacts/models/<feature_set>/imputer.pkl`
+| Class | eGeMAPS | MFCC | HuBERT SSL | Wav2Vec2 SSL | Support |
+|-------|---------|------|------------|--------------|--------:|
+| Canonical | **0.463** | 0.344 | 0.476 | 0.362 | 575 |
+| Crying | **0.322** | 0.304 | 0.298 | 0.281 | 191 |
+| Junk | **0.730** | 0.694 | 0.680 | 0.601 | 1,392 |
+| Laughing | **0.103** | 0.069 | 0.076 | 0.024 | 62 |
+| Non-canonical | **0.588** | 0.475 | 0.514 | 0.450 | 1,370 |
 
-### Viewing Results
+> **Key finding:** eGeMAPS (88-dim handcrafted features) outperforms the 768-dim SSL embeddings when used with XGBoost. All models struggle with the **Laughing** class (F1 < 0.11) due to extreme scarcity (only 46 training samples). See [docs/Model_Evaluation_Report.md](docs/Model_Evaluation_Report.md) for detailed analysis.
 
-```bash
-# View aggregated comparison table
-cat artifacts/results/results_summary.csv
+#### Best Hyperparameters (Optuna, 40 Trials)
 
-# View confusion matrices (if on remote server, use scp/rsync to download)
-open artifacts/eval/egemaps/confusion_matrix_test.png
+| Parameter | eGeMAPS | MFCC | HuBERT SSL | Wav2Vec2 SSL |
+|-----------|---------|------|------------|-------------:|
+| `max_depth` | 4 | 7 | 3 | 3 |
+| `learning_rate` | 0.120 | 0.013 | 0.012 | 0.030 |
+| `n_estimators` | 357 | 623 | 1,027 | 214 |
+| `subsample` | 0.720 | 0.714 | 0.640 | 0.701 |
+| `gamma` | 2.358 | 2.930 | 1.000 | 0.746 |
 
-# View best hyperparameters
-cat artifacts/models/egemaps/best_params.json | python -m json.tool
+### Confusion Matrices
 
-# View evaluation metrics
-cat artifacts/eval/egemaps/metrics_test.json | python -m json.tool
-```
+#### eGeMAPS
+
+| Validation | Test |
+|:----------:|:----:|
+| ![eGeMAPS Valid](images/cm_egemaps_valid.png) | ![eGeMAPS Test](images/cm_egemaps_test.png) |
+
+#### HuBERT SSL
+
+| Validation | Test |
+|:----------:|:----:|
+| ![HuBERT Valid](images/cm_hubert_ssl_valid.png) | ![HuBERT Test](images/cm_hubert_ssl_test.png) |
+
+#### MFCC
+
+| Validation | Test |
+|:----------:|:----:|
+| ![MFCC Valid](images/cm_mfcc_valid.png) | ![MFCC Test](images/cm_mfcc_test.png) |
+
+#### Wav2Vec2 SSL
+
+| Validation | Test |
+|:----------:|:----:|
+| ![Wav2Vec2 Valid](images/cm_wav2vec2_ssl_valid.png) | ![Wav2Vec2 Test](images/cm_wav2vec2_ssl_test.png) |
 
 ---
 
@@ -454,8 +473,8 @@ cat artifacts/eval/egemaps/metrics_test.json | python -m json.tool
 
 ### Model Training
 
-- **Algorithm**: XGBoost (multi:softmax objective)
-- **Early Stopping**: 50 rounds on validation set
+- **Algorithm**: XGBoost (multi:softprob objective)
+- **GPU Acceleration**: `device="cuda"`, `tree_method="hist"` (NVIDIA RTX 2080 Ti)
 - **Random State**: 42 (for reproducibility)
 - **Preprocessing**: Applied consistently (imputation → SMOTE → label encoding)
 
@@ -805,7 +824,7 @@ bash scripts/run_drift.sh
 uv run python -c "from vocalbaby.monitoring.drift import run_drift_report; run_drift_report()"
 ```
 
-Reports are saved to `artifacts/drift/`.
+Reports are saved locally after each run.
 
 ---
 
@@ -866,15 +885,32 @@ The GitHub Actions workflow (`.github/workflows/main.yml`) handles:
 
 ---
 
+## GPU Acceleration
+
+The pipeline leverages NVIDIA GPUs for both feature extraction and model training:
+
+| Component | Device | Details |
+|-----------|--------|--------|
+| XGBoost training & Optuna tuning | CUDA (RTX 2080 Ti) | `device="cuda"`, `tree_method="hist"` |
+| HuBERT SSL feature extraction | CUDA | `model.to("cuda")`, batch inference |
+| Wav2Vec2 SSL feature extraction | CUDA | `model.to("cuda")`, batch inference |
+| eGeMAPS extraction | CPU | openSMILE C++ backend (no GPU path) |
+| MFCC extraction | CPU | librosa/NumPy (no GPU path) |
+
+**Verified hardware:** 4× NVIDIA GeForce RTX 2080 Ti (11 GB each), Driver 565.57.01, CUDA 12.7
+
+---
+
 ## Future Enhancements
 
+- End-to-end fine-tuning of HuBERT/Wav2Vec2 with classification head
+- Feature fusion (eGeMAPS + SSL embeddings)
+- Class-weighted loss as alternative to SMOTE
 - CNN models over mel-spectrogram images
-- ResNet50 over mel-spectrogram images
-- wav2vec2 embeddings
-- Hybrid prosody + embedding features
-- Temporal models (LSTMs, Transformers)
+- Hierarchical classification (Speech-like → Emotional → Other)
 - Fine-grained sub-class detection within canonical/non-canonical categories
 - Multi-corpus generalization and cross-lingual transfer
+- PCA/UMAP dimensionality reduction for 768-dim SSL features
 
 ---
 
