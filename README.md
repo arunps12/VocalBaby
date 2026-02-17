@@ -517,25 +517,25 @@ Modify `params.yaml` and re-run `dvc repro` to update the pipeline.
 flowchart TB
     subgraph DATA["Data Layer"]
         direction LR
-        RAW["Raw .wav Audio<br/><i>Naturalistic Recordings</i>"]
-        META["Metadata CSV<br/><i>child_ID · age · gender · Answer · corpus</i>"]
+        RAW["Raw .wav Audio\nNaturalistic Recordings"]
+        META["Metadata CSV\nchild_ID, age, gender, Answer, corpus"]
     end
 
-    subgraph DVC_PIPELINE["DVC Pipeline  <i>(dvc repro)</i>"]
+    subgraph DVC_PIPELINE["DVC Pipeline (dvc repro)"]
         direction TB
-        ING["<b>1 — Data Ingestion</b><br/>Train / Valid / Test split"]
-        VAL["<b>2 — Data Validation</b><br/>Schema check · Drift guard"]
-        TRANS["<b>3 — Feature Extraction</b><br/>openSMILE eGeMAPS → .npy"]
-        TRAIN["<b>4 — Model Training</b><br/>SMOTE · XGBoost · Optuna"]
+        ING["1 - Data Ingestion\nTrain / Valid / Test split"]
+        VAL["2 - Data Validation\nSchema check, Drift guard"]
+        TRANS["3 - Feature Extraction\nopenSMILE eGeMAPS"]
+        TRAIN["4 - Model Training\nSMOTE, XGBoost, Optuna"]
     end
 
-    subgraph ML_TOOLS["ML & Feature Stack"]
+    subgraph ML_TOOLS["ML and Feature Stack"]
         direction LR
-        SMILE["openSMILE<br/><i>eGeMAPS features</i>"]
-        SMOTE["imbalanced-learn<br/><i>SMOTE oversampling</i>"]
-        XGB["XGBoost<br/><i>Classifier</i>"]
-        OPTUNA["Optuna<br/><i>Hyperparameter tuning</i>"]
-        SKLEARN["scikit-learn<br/><i>Preprocessing · Metrics</i>"]
+        SMILE["openSMILE\neGeMAPS features"]
+        SMOTE["imbalanced-learn\nSMOTE oversampling"]
+        XGB["XGBoost\nClassifier"]
+        OPTUNA["Optuna\nHyperparameter tuning"]
+        SKLEARN["scikit-learn\nPreprocessing, Metrics"]
     end
 
     subgraph ARTIFACTS["Model Artifacts"]
@@ -547,89 +547,80 @@ flowchart TB
 
     subgraph SERVING["Serving Layer"]
         direction TB
-        API["<b>FastAPI Server</b><br/><i>vocalbaby-serve · port 8000</i>"]
-        PREDICT["Prediction Pipeline<br/><i>/predict · /predict_zip</i>"]
+        API["FastAPI Server\nvocalbaby-serve, port 8000"]
+        PREDICT["Prediction Pipeline\n/predict, /predict_zip"]
         METRICS_EP["/metrics endpoint"]
     end
 
     subgraph MONITORING["Monitoring Stack"]
         direction LR
-        PROM["Prometheus<br/><i>Scrape metrics · Alerts</i>"]
-        GRAF["Grafana<br/><i>Dashboards · Visualization</i>"]
-        EVID["Evidently<br/><i>Data Drift Detection</i>"]
+        PROM["Prometheus\nScrape metrics, Alerts"]
+        GRAF["Grafana\nDashboards, Visualization"]
+        EVID["Evidently\nData Drift Detection"]
     end
 
-    subgraph CICD["CI/CD  <i>(GitHub Actions)</i>"]
+    subgraph CICD["CI/CD (GitHub Actions)"]
         direction TB
-        LINT["<b>Lint & Test</b><br/>Ruff · pytest"]
-        BUILD["<b>Build & Push</b><br/>Docker → ECR"]
-        DEPLOY["<b>Deploy</b><br/>EC2 pull & restart"]
-        DRIFT_CRON["<b>Nightly Drift</b><br/>Scheduled cron job"]
+        LINT["Lint and Test\nRuff, pytest"]
+        BUILD["Build and Push\nDocker to ECR"]
+        DEPLOY["Deploy\nEC2 pull and restart"]
+        DRIFT_CRON["Nightly Drift\nScheduled cron job"]
     end
 
-    subgraph INFRA["AWS Infrastructure  <i>(Terraform)</i>"]
+    subgraph INFRA["AWS Infrastructure (Terraform)"]
         direction LR
-        VPC["VPC / Subnets<br/><i>Networking module</i>"]
-        ECR["ECR<br/><i>Container Registry</i>"]
-        EC2["EC2<br/><i>Compute Instance</i>"]
-        S3["S3<br/><i>Artifact Storage</i>"]
-        IAM["IAM<br/><i>Roles & Policies</i>"]
+        VPC["VPC / Subnets\nNetworking module"]
+        ECR["ECR\nContainer Registry"]
+        EC2["EC2\nCompute Instance"]
+        S3["S3\nArtifact Storage"]
+        IAM["IAM\nRoles and Policies"]
     end
 
-    subgraph PKG["Packaging & Tooling"]
+    subgraph PKG["Packaging and Tooling"]
         direction LR
-        UV["uv  <i>(Astral)</i><br/>Dependency management"]
-        PYPROJ["pyproject.toml<br/><i>PEP 621 · Hatchling</i>"]
-        DOCKER["Docker<br/><i>Container build</i>"]
-        RUFF["Ruff<br/><i>Lint & Format</i>"]
+        UV["uv (Astral)\nDependency management"]
+        PYPROJ["pyproject.toml\nPEP 621, Hatchling"]
+        DOCKER["Docker\nContainer build"]
+        RUFF["Ruff\nLint and Format"]
     end
 
-    %% ── Data flows ──
     RAW --> ING
     META --> ING
     ING --> VAL --> TRANS --> TRAIN
 
-    %% ── ML tool connections ──
     TRANS -.-> SMILE
     TRAIN -.-> SMOTE
     TRAIN -.-> XGB
     TRAIN -.-> OPTUNA
     TRAIN -.-> SKLEARN
 
-    %% ── Artifacts ──
     TRAIN --> MODEL
     TRAIN --> PREPROC
     TRAIN --> ENCODER
 
-    %% ── Serving ──
     MODEL --> API
     PREPROC --> API
     ENCODER --> API
     API --> PREDICT
     API --> METRICS_EP
 
-    %% ── Monitoring ──
     METRICS_EP --> PROM
     PROM --> GRAF
     EVID --> PROM
     TRANS -.->|reference data| EVID
 
-    %% ── CI/CD ──
     LINT --> BUILD --> DEPLOY
     DRIFT_CRON -.-> EVID
 
-    %% ── Infrastructure ──
     BUILD --> ECR
     DEPLOY --> EC2
     TRAIN --> S3
     EC2 -.-> ECR
     EC2 -.-> S3
 
-    %% ── Packaging ──
     UV -.-> PYPROJ
     PYPROJ -.-> DOCKER
 
-    %% ── Styling ──
     classDef dataStyle fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
     classDef pipeStyle fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
     classDef mlStyle fill:#fff3e0,stroke:#e65100,color:#bf360c
