@@ -206,6 +206,46 @@ aggregation:
   sort_ascending: false
 
 # -----------------------------------------------------------------------------
+# CLASSIFICATION MODE CONFIGURATION
+# -----------------------------------------------------------------------------
+classification:
+  # Available modes: flat, hierarchical, both
+  mode: flat
+
+  # Hierarchy definition (used when mode = hierarchical or both)
+  hierarchy:
+    # Stage 1: Binary split
+    stage1:
+      emotional:
+        - Crying
+        - Laughing
+      non_emotional:
+        - Canonical
+        - Junk
+        - Non-canonical
+
+    # Stage 2A: Emotional sub-classification
+    stage2_emotional:
+      classes:
+        - Crying
+        - Laughing
+
+    # Stage 2B: Non-Emotional sub-classification
+    stage2_non_emotional:
+      classes:
+        - Canonical
+        - Junk
+        - Non-canonical
+
+  # Inverse-frequency class weighting (applied per-stage)
+  use_class_weights: true
+
+  # Routing mode for hierarchical inference
+  # hard  = argmax on stage-1, then route to one branch
+  # soft  = probabilistic routing: P(class) = P(branch) × P(class|branch)
+  routing: hard
+
+# -----------------------------------------------------------------------------
 # DRIFT DETECTION CONFIGURATION
 # -----------------------------------------------------------------------------
 drift:

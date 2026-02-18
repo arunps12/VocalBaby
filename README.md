@@ -26,7 +26,7 @@
 
 ## Project Purpose
 
-This project was developed in **two phases**:
+This project was developed in **three phases**:
 
 ### Phase 1: Feature Comparison Research
 
@@ -52,6 +52,10 @@ Based on the research findings, we built a **complete production pipeline** usin
 - **Evidently** data drift detection
 - **GitHub Actions** CI/CD (lint → build → push to ECR → deploy to EC2)
 - **Terraform** infrastructure-as-code for AWS (VPC, ECR, EC2, S3, IAM)
+
+### Phase 3: Hierarchical Classification
+
+The flat 5-class classifier struggles with rare classes (Laughing F1 < 0.11, Crying F1 ≈ 0.32). Phase 3 adds a **hierarchical classification** mode that decomposes the problem into a two-stage decision tree — first separating Emotional (Crying, Laughing) from Non-Emotional (Canonical, Junk, Non-canonical), then classifying within each branch. This is fully integrated into the existing 7-stage DVC pipeline and controlled by a single `params.yaml` toggle (`classification.mode: flat | hierarchical | both`).
 
 ---
 
@@ -214,7 +218,10 @@ The server runs at `http://localhost:8000`:
 │  • Optuna optimization (40 trials)                              │
 │  • Multi-objective: UAR + Macro F1                              │
 │  • Independent tuning per feature set                           │
+│  • Flat and/or hierarchical (3 sub-models) per classification   │
+│    mode (controlled by params.yaml → classification.mode)       │
 │  Output: tuning/<feature_set>/best_params.json                  │
+│          tuning/<feature_set>/hierarchical/                     │
 └───────────────────────┬─────────────────────────────────────────┘
                         ▼
 ┌─────────────────────────────────────────────────────────────────┐
@@ -222,7 +229,9 @@ The server runs at `http://localhost:8000`:
 │  • XGBoost training with best params                            │
 │  • SMOTE oversampling (k=5, random_state=42)                    │
 │  • Label encoding + median imputation                           │
+│  • Hierarchical: trains Stage-1 + Stage-2A + Stage-2B models    │
 │  Output: models/<feature_set>/xgb_model.pkl                     │
+│          models/<feature_set>/hierarchical/                     │
 └───────────────────────┬─────────────────────────────────────────┘
                         ▼
 ┌─────────────────────────────────────────────────────────────────┐
@@ -231,14 +240,19 @@ The server runs at `http://localhost:8000`:
 │  • Confusion matrices (PNG + CSV)                               │
 │  • Classification reports                                       │
 │  • Metrics: Accuracy, UAR, F1, Precision, Recall                │
+│  • Hierarchical: hard + soft routing, per-stage metrics         │
 │  Output: eval/<feature_set>/                                    │
+│          eval/<feature_set>/hierarchical/{hard,soft}/           │
 └───────────────────────┬─────────────────────────────────────────┘
                         ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │  STAGE 07: RESULTS AGGREGATION                                  │
 │  • Comparison table across all feature sets                     │
 │  • Metrics for both valid and test splits                       │
+│  • Hierarchical: flat vs hier comparison + per-class deltas     │
 │  Output: results/results_summary.csv                            │
+│          results/comparison_summary.csv (when mode=both/hier)   │
+│          results/per_class_comparison.csv (when mode=both)      │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -296,7 +310,7 @@ The **HuBERT** and **Wav2Vec2** models used in this pipeline are **custom fine-t
 │
 ├── src/vocalbaby/                 # Main package (src-layout)
 │   ├── config/                    # Configuration management
-│   │   └── schemas.py
+│   │   └── schemas.py             # ConfigLoader (reads params.yaml)
 │   ├── data/                      # Data ingestion & validation
 │   │   ├── ingest.py
 │   │   └── validate.py
@@ -306,16 +320,30 @@ The **HuBERT** and **Wav2Vec2** models used in this pipeline are **custom fine-t
 │   │   ├── mfcc.py
 │   │   ├── hubert.py
 │   │   └── wav2vec2.py
+│   ├── experiments/               # Experiment logic (flat + hierarchical)
+│   │   ├── hierarchy.py           # Core hierarchical classifier & helpers
+│   │   ├── hyperparameter_tuning.py
+│   │   ├── training.py
+│   │   ├── evaluation.py
+│   │   ├── data_loader.py
+│   │   └── scripts/               # Callable library functions per mode
+│   │       ├── tune_hyperparams.py        # Flat tuning
+│   │       ├── tune_hierarchical.py       # Hierarchical tuning
+│   │       ├── train_model.py             # Flat training
+│   │       ├── train_hierarchical.py      # Hierarchical training
+│   │       ├── evaluate_model.py          # Flat evaluation
+│   │       ├── evaluate_hierarchical.py   # Hierarchical evaluation
+│   │       └── aggregate_comparison.py    # Flat vs hier comparison
 │   ├── models/                    # Hyperparameter tuning & training
 │   ├── eval/                      # Evaluation & metrics
 │   ├── pipeline/                  # 7 pipeline stage modules
 │   │   ├── stage_01_ingest.py
 │   │   ├── stage_02_validate.py
 │   │   ├── stage_03_transform.py
-│   │   ├── stage_04_tune.py
-│   │   ├── stage_05_train.py
-│   │   ├── stage_06_evaluate.py
-│   │   └── stage_07_aggregate.py
+│   │   ├── stage_04_tune.py       # Dispatches flat / hierarchical tuning
+│   │   ├── stage_05_train.py      # Dispatches flat / hierarchical training
+│   │   ├── stage_06_evaluate.py   # Dispatches flat / hierarchical evaluation
+│   │   └── stage_07_aggregate.py  # Aggregates flat + hierarchical results
 │   ├── components/                # Legacy components (kept for compatibility)
 │   ├── utils/                     # Utility functions
 │   ├── logging/                   # Logging configuration
@@ -394,6 +422,19 @@ evaluation:
     save_csv: true
     save_png: true
 ```
+
+### Classification Mode
+```yaml
+classification:
+  mode: flat            # flat | hierarchical | both (default: flat)
+  routing: hard         # hard | soft (hierarchical inference routing)
+  use_class_weights: true
+  hierarchy:
+    emotional: [Crying, Laughing]
+    non_emotional: [Canonical, Junk, Non-canonical]
+```
+
+When `mode` is `hierarchical` or `both`, stages 04–07 additionally tune, train, evaluate, and aggregate hierarchical models. Changing this value triggers DVC to re-run those stages.
 
 ### GPU Acceleration
 ```yaml
@@ -751,13 +792,160 @@ The pipeline leverages NVIDIA GPUs for both feature extraction and model trainin
 
 ---
 
+## Hierarchical Classification (Phase 3)
+
+### Motivation
+
+The flat 5-class classifier struggles with rare classes (Laughing F1 < 0.11, Crying F1 ≈ 0.32).
+Hierarchical classification separates the problem into simpler sub-tasks, allowing each stage
+to focus on fewer, more separable classes — potentially improving minority-class detection.
+
+### Decision Tree Structure
+
+```
+                    Input audio
+                        │
+                 ┌──────┴──────┐
+                 │  STAGE 1    │
+                 │  (Binary)   │
+                 └──────┬──────┘
+                        │
+            ┌───────────┴───────────┐
+            ▼                       ▼
+     ┌─────────────┐       ┌──────────────┐
+     │  Emotional   │       │Non-Emotional │
+     │ (Crying,     │       │(Canonical,   │
+     │  Laughing)   │       │ Junk,        │
+     └──────┬──────┘       │ Non-canon.)  │
+            │               └──────┬───────┘
+     ┌──────┴──────┐       ┌──────┴───────┐
+     │  STAGE 2A   │       │  STAGE 2B    │
+     │  (Binary)   │       │  (3-class)   │
+     └─────────────┘       └──────────────┘
+```
+
+**Stage 1** — Binary: Emotional `{Crying, Laughing}` vs Non-Emotional `{Canonical, Junk, Non-canonical}`
+
+**Stage 2A** — Binary: `Crying` vs `Laughing` (only for samples predicted Emotional)
+
+**Stage 2B** — 3-class: `Canonical` vs `Junk` vs `Non-canonical` (only for samples predicted Non-Emotional)
+
+### Inference Modes
+
+| Mode | Description |
+|------|-------------|
+| **Hard routing** | `argmax` on Stage 1 → route to one branch → `P(class) = P(branch) × P(class\|branch)` |
+| **Soft routing** | Use Stage 1 probabilities as weights for *both* branches → `P(class) = P(Emo) × P(class\|Emo) + P(NonEmo) × P(class\|NonEmo)` |
+
+Both modes produce a full 5-class probability vector consistent with the flat classifier's label order.
+
+### Running Hierarchical Experiments
+
+Hierarchical classification is integrated into the existing 7-stage DVC pipeline.
+Control the mode via `params.yaml → classification.mode`:
+
+```yaml
+# params.yaml
+classification:
+  mode: both        # flat | hierarchical | both (default: flat)
+  routing: hard     # hard | soft (inference routing)
+  use_class_weights: true
+```
+
+All three execution methods work identically:
+
+```bash
+# Option 1: DVC pipeline (recommended — full reproducibility)
+dvc repro
+
+# Option 2: Bash scripts (stage-by-stage)
+bash scripts/04_tune.sh
+bash scripts/05_train.sh
+bash scripts/06_evaluate.sh
+bash scripts/07_aggregate.sh
+
+# Option 3: Python modules (for IDE/debugging)
+python -m vocalbaby.pipeline.stage_04_tune
+python -m vocalbaby.pipeline.stage_05_train
+python -m vocalbaby.pipeline.stage_06_evaluate
+python -m vocalbaby.pipeline.stage_07_aggregate
+```
+
+When `mode: both`, each stage runs flat *and* hierarchical in sequence. Changing `classification.mode` in `params.yaml` triggers DVC to re-run stages 04–07.
+
+### Artifact Layout
+
+```
+artifacts/<timestamp>/
+├── tuning/<feature_set>/
+│   ├── best_params.json                        # flat (unchanged)
+│   └── hierarchical/
+│       ├── stage1/best_params.json
+│       ├── stage2_emotional/best_params.json
+│       └── stage2_non_emotional/best_params.json
+├── models/<feature_set>/
+│   ├── xgb_model.pkl                           # flat (unchanged)
+│   └── hierarchical/
+│       ├── hierarchy_meta.json
+│       ├── imputer.pkl
+│       ├── stage1/xgb_model.pkl
+│       ├── stage2_emotional/{xgb_model.pkl, label_encoder.pkl}
+│       └── stage2_non_emotional/{xgb_model.pkl, label_encoder.pkl}
+├── eval/<feature_set>/
+│   ├── confusion_matrix_valid.png              # flat (unchanged)
+│   ├── metrics_valid.json                      # flat (unchanged)
+│   └── hierarchical/
+│       ├── hard/
+│       │   ├── confusion_matrix_valid.png|csv
+│       │   ├── confusion_matrix_test.png|csv
+│       │   ├── classification_report_valid|test.json
+│       │   └── metrics_valid|test.json
+│       ├── soft/
+│       │   └── (same layout)
+│       ├── stage1/metrics_valid|test.json
+│       ├── stage2_emotional/metrics_valid|test.json
+│       └── stage2_non_emotional/metrics_valid|test.json
+└── results/
+    ├── results_summary.csv                     # flat only (unchanged)
+    ├── comparison_summary.csv                  # flat + hierarchical
+    └── per_class_comparison.csv                # per-class F1 deltas
+```
+
+### Experimental Comparison Protocol
+
+The implementation guarantees strict comparability between flat and hierarchical modes:
+
+| Property | Flat | Hierarchical |
+|----------|------|-------------|
+| Train/Valid/Test splits | Child-disjoint (identical) | Child-disjoint (identical) |
+| Feature matrices | Shared (no re-extraction) | Shared (no re-extraction) |
+| Random seed | 42 | 42 |
+| Imputation | Median | Median |
+| Resampling | SMOTE (k=5) | SMOTE (k=5) per stage |
+| Class weighting | None | Inverse-frequency per stage |
+| Tuning | Optuna 40 trials (UAR + F1) | Optuna 40 trials per stage |
+| Evaluation metrics | UAR, F1, Precision, Recall | Same + per-stage metrics |
+
+### Scientific Questions
+
+After running the pipeline with `classification.mode: both`, the files
+`results/comparison_summary.csv` and `results/per_class_comparison.csv`
+directly answer:
+
+1. **Does hierarchy improve Laughing recall?** → Check `delta_recall` for Laughing class
+2. **Does hierarchy improve Crying recall?** → Check `delta_recall` for Crying class
+3. **Is improvement consistent across feature sets?** → Compare `delta_f1` across feature sets
+4. **Which feature set benefits most from hierarchy?** → Sort by `delta_f1` or `delta_recall`
+
+---
+
 ## Future Enhancements
 
 - End-to-end fine-tuning of HuBERT/Wav2Vec2 with classification head
 - Feature fusion (eGeMAPS + SSL embeddings)
 - Class-weighted loss as alternative to SMOTE
 - CNN models over mel-spectrogram images
-- Hierarchical classification (Speech-like → Emotional → Other)
+- ~~Hierarchical classification~~ ✅ Implemented (see [Hierarchical Classification](#hierarchical-classification-phase-3))
 - Fine-grained sub-class detection within canonical/non-canonical categories
 - Multi-corpus generalization and cross-lingual transfer
 - PCA/UMAP dimensionality reduction for 768-dim SSL features

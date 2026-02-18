@@ -138,6 +138,30 @@ class ConfigLoader:
         """Get evaluation configuration."""
         return self.get('evaluation', {})
 
+    def get_classification_mode(self) -> str:
+        """
+        Get classification mode from params.yaml.
+
+        Returns:
+            One of 'flat', 'hierarchical', or 'both'.
+            Defaults to 'flat' if not set.
+        """
+        mode = self.get('classification.mode', 'flat')
+        if mode not in ('flat', 'hierarchical', 'both'):
+            raise ValueError(
+                f"Invalid classification.mode='{mode}'. "
+                "Must be one of: flat, hierarchical, both"
+            )
+        return mode
+
+    def get_classification_routing(self) -> str:
+        """Get hierarchical routing mode ('hard' or 'soft')."""
+        return self.get('classification.routing', 'hard')
+
+    def get_classification_use_class_weights(self) -> bool:
+        """Whether to apply inverse-frequency class weights per stage."""
+        return self.get('classification.use_class_weights', True)
+
 
 # Column name constants (for compatibility with existing code)
 CHILD_ID_COL = CHILD_ID_COLUMN

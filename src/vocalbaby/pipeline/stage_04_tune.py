@@ -4,14 +4,22 @@ STAGE 04: HYPERPARAMETER TUNING
 Runs Optuna hyperparameter optimization for each feature set.
 Uses the current run directory from artifacts/latest.
 
+Supports flat, hierarchical, or both classification modes
+(controlled by params.yaml → classification.mode).
+
 Outputs:
-    artifacts/<timestamp>/tuning/<feature_set>/best_params.json
-    artifacts/<timestamp>/tuning/<feature_set>/study.pkl
+    artifacts/<timestamp>/tuning/<feature_set>/best_params.json          (flat)
+    artifacts/<timestamp>/tuning/<feature_set>/study.pkl                 (flat)
+    artifacts/<timestamp>/tuning/<feature_set>/hierarchical/             (hierarchical)
+        stage1/best_params.json
+        stage2_emotional/best_params.json
+        stage2_non_emotional/best_params.json
 """
 import sys
 import argparse
 
 from vocalbaby.experiments.scripts.tune_hyperparams import tune_feature_set
+from vocalbaby.experiments.scripts.tune_hierarchical import tune_hierarchical_feature_set
 from vocalbaby.config.schemas import ConfigLoader
 from vocalbaby.utils.run_manager import RunManager
 from vocalbaby.logging.logger import logging
@@ -38,27 +46,53 @@ def main():
         n_trials = args.n_trials or config.get('tuning.n_trials', 40)
         search_space = config.get('tuning.xgb_search_space', None)
 
+        # Classification mode: flat | hierarchical | both
+        mode = config.get_classification_mode()
+        use_class_weights = config.get_classification_use_class_weights()
+        run_flat = mode in ("flat", "both")
+        run_hier = mode in ("hierarchical", "both")
+
         artifact_dir = str(RunManager.get_current_run_dir())
         print(f"  Run directory  : {artifact_dir}")
         print(f"  Feature sets   : {feature_sets}")
         print(f"  Optuna trials  : {n_trials}")
+        print(f"  Mode           : {mode}")
         logging.info(f"Run directory  : {artifact_dir}")
         logging.info(f"Feature sets   : {feature_sets}")
         logging.info(f"Optuna trials  : {n_trials}")
+        logging.info(f"Classification : {mode}")
 
         for i, feature_set in enumerate(feature_sets, 1):
-            print(f"\n  [{i}/{len(feature_sets)}] Tuning: {feature_set} ...")
-            logging.info(f"\n{'='*80}")
-            logging.info(f"Tuning hyperparameters: {feature_set}")
-            logging.info(f"{'='*80}")
+            # ── Flat tuning ──────────────────────────────────────────────────
+            if run_flat:
+                print(f"\n  [{i}/{len(feature_sets)}] Tuning (flat): {feature_set} ...")
+                logging.info(f"\n{'='*80}")
+                logging.info(f"Tuning hyperparameters (flat): {feature_set}")
+                logging.info(f"{'='*80}")
 
-            tune_feature_set(
-                feature_set=feature_set,
-                artifact_dir=artifact_dir,
-                n_trials=n_trials,
-                search_space=search_space,
-            )
-            print(f"  [{i}/{len(feature_sets)}] Done:   {feature_set}")
+                tune_feature_set(
+                    feature_set=feature_set,
+                    artifact_dir=artifact_dir,
+                    n_trials=n_trials,
+                    search_space=search_space,
+                )
+                print(f"  [{i}/{len(feature_sets)}] Done (flat): {feature_set}")
+
+            # ── Hierarchical tuning ──────────────────────────────────────────
+            if run_hier:
+                print(f"\n  [{i}/{len(feature_sets)}] Tuning (hierarchical): {feature_set} ...")
+                logging.info(f"\n{'='*80}")
+                logging.info(f"Tuning hyperparameters (hierarchical): {feature_set}")
+                logging.info(f"{'='*80}")
+
+                tune_hierarchical_feature_set(
+                    feature_set=feature_set,
+                    artifact_dir=artifact_dir,
+                    n_trials=n_trials,
+                    search_space=search_space,
+                    use_class_weights=use_class_weights,
+                )
+                print(f"  [{i}/{len(feature_sets)}] Done (hierarchical): {feature_set}")
 
         print("\n" + "=" * 70)
         print("  STAGE 04: HYPERPARAMETER TUNING - COMPLETED")

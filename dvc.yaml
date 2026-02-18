@@ -90,6 +90,8 @@ stages:
       - tuning.n_trials
       - tuning.objectives
       - tuning.xgb_search_space
+      - classification.mode
+      - classification.use_class_weights
     outs:
       - artifacts/latest/tuning:
           cache: true
@@ -110,6 +112,7 @@ stages:
       - features.sets
       - preprocessing
       - training
+      - classification.mode
     outs:
       - artifacts/latest/models:
           cache: true
@@ -131,6 +134,7 @@ stages:
       - evaluation.metrics
       - evaluation.confusion_matrix
       - evaluation.eval_splits
+      - classification.mode
     outs:
       - artifacts/latest/eval:
           cache: false
@@ -149,6 +153,7 @@ stages:
       - features.sets
       - aggregation.columns
       - aggregation.sort_by
+      - classification.mode
     metrics:
       - artifacts/latest/results/results_summary.csv:
           cache: false
